@@ -45,6 +45,8 @@ class AuthWindow(QMainWindow):
                     if self.failed_attempts >= 3:
                         QMessageBox.about(self, "Ошибка", "Превышено количество попыток.")
                         self.close()
+                    else:
+                        self.update_failed_attempts(login)
             else:
                 db.close()
                 QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
@@ -52,6 +54,33 @@ class AuthWindow(QMainWindow):
             QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
         self.ui.lcdNumber.display(self.failed_attempts)
+
+    def update_failed_attempts(self, login):
+        if db.open():
+            query = QSqlQuery()
+            query.prepare("SELECT failed_attempts FROM users WHERE login=:login")
+            query.bindValue(":login", login)
+
+            if query.exec():
+                if query.next():
+                    current_attempts = int(query.value(0))
+                    new_attempts = current_attempts + self.failed_attempts
+
+                    query.prepare("UPDATE users SET failed_attempts=:failed_attempts WHERE login=:login")
+                    query.bindValue(":failed_attempts", new_attempts)
+                    query.bindValue(":login", login)
+
+                    if query.exec():
+                        db.commit()
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+                else:
+                    QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+            db.close()
+        else:
+            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
     def update_ui(self):
         self.close()
