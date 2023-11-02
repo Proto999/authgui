@@ -1,9 +1,15 @@
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtSql import QSqlDatabase, QSqlQuery
 import subprocess
 
 from uuid import Ui_MainWindow
 from auth import Ui_AuthWindow
+
+db = QSqlDatabase.addDatabase("QODBC")
+db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=users;UID=admin;PWD=1234")
 
 
 class AuthWindow(QMainWindow):
@@ -11,6 +17,46 @@ class AuthWindow(QMainWindow):
         super(AuthWindow, self).__init__()
         self.ui = Ui_AuthWindow()
         self.ui.setupUi(self)
+
+        self.failed_attempts = 0  # Счетчик неудачных попыток входа
+        self.ui.lcdNumber.display(self.failed_attempts)  # Отображение счетчика на QLCDNumber
+
+        self.ui.pushButton.clicked.connect(self.check_credentials)
+
+    def check_credentials(self):
+        login = self.ui.lineEdit.text()
+        password = self.ui.lineEdit_2.text()
+
+        if db.open():
+            query = QSqlQuery()
+            query.prepare("SELECT * FROM users WHERE login=:login AND password=:password")
+            query.bindValue(":login", login)
+            query.bindValue(":password", password)
+
+            if query.exec():
+                if query.next():
+                    db.close()
+                    QMessageBox.about(self, "Успех!", "Доступ с этого устройства разрешен.")
+                    ##self.update_ui()
+                else:
+                    db.close()
+                    QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
+                    self.failed_attempts += 1
+                    if self.failed_attempts >= 3:
+                        QMessageBox.about(self, "Ошибка", "Превышено количество попыток.")
+                        self.close()
+            else:
+                db.close()
+                QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+        self.ui.lcdNumber.display(self.failed_attempts)
+
+    def update_ui(self):
+        self.close()
+        self.auth_window = AuthWindow()
+        self.auth_window.show()
 
 
 class UUID(QMainWindow):
@@ -21,8 +67,6 @@ class UUID(QMainWindow):
         self.ui.setupUi(self)
 
         self.ui.pushButton.clicked.connect(self.check_uuid)
-
-
 
     @staticmethod
     def get_uuid():
@@ -42,6 +86,7 @@ class UUID(QMainWindow):
         self.close()
         self.auth_window = AuthWindow()
         self.auth_window.show()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
