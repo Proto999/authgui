@@ -1,13 +1,14 @@
-import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
-from PySide6.QtSql import QSqlDatabase, QSqlQuery
+import hashlib
+import re
 import subprocess
+import sys
 
-from uuid import Ui_MainWindow
+from PySide6.QtSql import QSqlDatabase, QSqlQuery
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QDialog, QLineEdit
+
 from auth import Ui_AuthWindow
 from reg import Ui_reg
+from uuid import Ui_MainWindow
 
 db = QSqlDatabase.addDatabase("QODBC")
 db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=users;UID=admin;PWD=1234")
@@ -17,10 +18,11 @@ class RegWindow(QMainWindow):
     def __init__(self):
         super(RegWindow, self).__init__()
         self.ui = Ui_reg()
+        self.auth_window = None
         self.ui.setupUi(self)
 
         self.ui.pushButton.clicked.connect(self.register_user)
-        self.ui.pushButton_2.clicked.connect(AuthWindow.update_ui)
+        self.ui.pushButton_2.clicked.connect(self.update_ui)
 
         self.ui.horizontalSlider.setMinimum(0)
         self.ui.horizontalSlider.setMaximum(2147483647)
@@ -36,32 +38,77 @@ class RegWindow(QMainWindow):
         last_name = self.ui.lineEdit_6.text()
         patronymic = self.ui.lineEdit_7.text()
 
+        if not login.isdigit() or len(login) != 4:
+            QMessageBox.about(self, "Ошибка", "Ошибка. Имя пользователя введено неверно.")
+            return
+
+        if not re.match(r"^\d{6}[a-zA-Z]$", password):
+            QMessageBox.about(self, "Ошибка",
+                              "Ошибка. Пароль должен состоять как минимум из 6 цифр и хотя бы одной буквы.")
+            return
+
+        if "@" not in email:
+            QMessageBox.about(self, "Ошибка", "Ошибка. Email введен неверно.")
+            return
+
+        if not re.match(r"^\d{10}$", phone):
+            QMessageBox.about(self, "Ошибка", "Ошибка. Номер телефона должен состоять из 10 цифр.")
+            return
+
+        if first_name and not first_name.isalpha():
+            QMessageBox.about(self, "Ошибка", "Ошибка. Имя должно содержать только буквы.")
+            return
+
+        if last_name and not last_name.isalpha():
+            QMessageBox.about(self, "Ошибка", "Ошибка. Фамилия должна содержать только буквы.")
+            return
+
+        if patronymic and not patronymic.isalpha():
+            QMessageBox.about(self, "Ошибка", "Ошибка. Фамилия должна содержать только буквы.")
+            return
+
+        if address and "%" in address:
+            QMessageBox.about(self, "Ошибка", "Ошибка. Адрес регистрации не может содержать символ процента (%)")
+            return
+
         if db.open():
             query = QSqlQuery()
-            query.prepare(
-                "INSERT INTO users (login, password, email, phone, address, first_name, last_name, patronymic) "
-                "VALUES (:login, :password, :email, :phone, :address, :first_name, :last_name, :patronymic)")
-            query.bindValue(":login", login)
-            query.bindValue(":password", password)
-            query.bindValue(":email", email)
-            query.bindValue(":phone", phone)
-            query.bindValue(":address", address)
-            query.bindValue(":first_name", first_name)
-            query.bindValue(":last_name", last_name)
-            query.bindValue(":patronymic", patronymic)
+            select_query = "SELECT * FROM users WHERE login = ?"
+            query.prepare(select_query)
+            query.bindValue(0, login)
 
-            if query.exec_():
-                db.close()
-                QMessageBox.about(self, "Успех!", "Пользователь успешно зарегистрирован.")
+            if query.exec() and query.next():
+                QMessageBox.about(self, "Ошибка", "Пользователь с таким логином уже существует.")
             else:
-                db.close()
-                QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+                hashed_password = self.calculate_md5_hash(password)  # Хеширование пароля
+                insert_query = (
+                    'INSERT INTO users (login, password, email, phone, first_name, last_name, patronymic, address, message) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                values = [login, hashed_password, email, phone, first_name, last_name, patronymic, address,
+                          "Еще ничего не написал"]
+                query.prepare(insert_query)
+                for i, value in enumerate(values):
+                    query.bindValue(i, value)
+                if query.exec():
+                    db.commit()
+                    QMessageBox.about(self, "Успех", "Пользователь успешно зарегистрирован!")
+                else:
+                    print("Ошибка выполнения запроса на вставку нового пользователя.")
         else:
-            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+            QMessageBox.about(self, "Ошибка", "Не удалось выполнить запрос к базе данных.")
+
+    @staticmethod
+    def calculate_md5_hash(data):
+        md5_hash = hashlib.md5()
+        md5_hash.update(data.encode('utf-8'))
+        return md5_hash.hexdigest()
 
     def updateLineEdit(self, value):
         self.ui.lineEdit_4.setText(str(value))
 
+    def update_ui(self):
+        self.close()
+        self.auth_window = AuthWindow()
+        self.auth_window.show()
 
 
 class AuthWindow(QMainWindow):
@@ -74,6 +121,7 @@ class AuthWindow(QMainWindow):
         self.ui.lcdNumber.display(self.failed_attempts)  # Отображение счетчика на QLCDNumber
 
         self.ui.pushButton.clicked.connect(self.check_credentials)
+        self.ui.pushButton_2.clicked.connect(self.open_reg_window)
 
     def check_credentials(self):
         login = self.ui.lineEdit.text()
@@ -87,11 +135,9 @@ class AuthWindow(QMainWindow):
 
             if query.exec():
                 if query.next():
-                    db.close()
                     QMessageBox.about(self, "Успех!", "Доступ с этого устройства разрешен.")
-                    self.open_reg_window()
+                    ##self.open_reg_window()
                 else:
-                    db.close()
                     QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
                     self.failed_attempts += 1
                     if self.failed_attempts >= 3:
@@ -100,7 +146,6 @@ class AuthWindow(QMainWindow):
                     else:
                         self.update_failed_attempts(login)
             else:
-                db.close()
                 QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
         else:
             QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
@@ -135,14 +180,8 @@ class AuthWindow(QMainWindow):
                     QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
             else:
                 QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
-            db.close()
         else:
             QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
-
-    def update_ui(self):
-        self.close()
-        self.auth_window = AuthWindow()
-        self.auth_window.show()
 
 
 class UUID(QMainWindow):
