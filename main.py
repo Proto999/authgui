@@ -131,7 +131,7 @@ class AuthWindow(QMainWindow):
             query = QSqlQuery()
             query.prepare("SELECT * FROM users WHERE login=:login AND password=:password")
             query.bindValue(":login", login)
-            query.bindValue(":password", password)
+            query.bindValue(":password", self.calculate_md5_hash(password))
 
             if query.exec():
                 if query.next():
@@ -152,6 +152,13 @@ class AuthWindow(QMainWindow):
 
         self.ui.lcdNumber.display(self.failed_attempts)
 
+    @staticmethod
+    def calculate_md5_hash(data):
+        data = str(data)
+        md5_hash = hashlib.md5()
+        md5_hash.update(data.encode('utf-8'))
+        return md5_hash.hexdigest()
+
     def open_reg_window(self):
         self.close()
         self.reg_window = RegWindow()
@@ -165,17 +172,20 @@ class AuthWindow(QMainWindow):
 
             if query.exec():
                 if query.next():
-                    current_attempts = int(query.value(0))
-                    new_attempts = current_attempts + self.failed_attempts
+                    current_attempts = query.value(0)
+                    if current_attempts is not None:
+                        current_attempts = int(current_attempts)
+                        new_attempts = current_attempts + self.failed_attempts
 
-                    query.prepare("UPDATE users SET failed_attempts=:failed_attempts WHERE login=:login")
-                    query.bindValue(":failed_attempts", new_attempts)
-                    query.bindValue(":login", login)
+                        query.prepare("UPDATE users SET failed_attempts=:failed_attempts WHERE login=:login")
+                        query.bindValue(":failed_attempts", new_attempts)
+                        query.bindValue(":login", login)
 
-                    if query.exec():
-                        db.commit()
-                    else:
-                        QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+                        if query.exec():
+                            db.commit()
+                        else:
+                            QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+
                 else:
                     QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
             else:
