@@ -135,7 +135,7 @@ class AuthWindow(QMainWindow):
 
             if query.exec():
                 if query.next():
-                    QMessageBox.about(self, "Успех!", "Доступ с этого устройства разрешен.")
+                    QMessageBox.about(self, "Успех!", "Авторизация успешна.")
                     ##self.open_reg_window()
                 else:
                     QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
