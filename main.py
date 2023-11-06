@@ -9,9 +9,20 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QDialog, Q
 from auth import Ui_AuthWindow
 from reg import Ui_reg
 from uuid import Ui_MainWindow
+from redactor import Ui_RedWindow
 
 db = QSqlDatabase.addDatabase("QODBC")
 db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=users;UID=admin;PWD=1234")
+
+
+class RedWindow(QMainWindow):
+    def __int__(self):
+        super(RedWindow).__int__()
+
+
+
+
+
 
 
 class RegWindow(QMainWindow):
