@@ -24,7 +24,7 @@ class AdminPanelWindow(QMainWindow):
         self.ui = Ui_AdminPanelWidget()
         self.ui.setupUi(self)
 
-        self.load_data_from_database()
+        self.ui.pushButton.clicked.connect(self.load_data_from_database)
 
     def load_data_from_database(self):
         # Получаем данные из базы данных
