@@ -283,6 +283,21 @@ border-radius: 20px;</string>
 color: rgb(38, 38, 38);
 font: 700 10pt &quot;gg sans&quot;;</string>
         </property>
+        <item>
+         <property name="text">
+          <string>Модератор</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Пользователь</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Гость</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item row="2" column="1">

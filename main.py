@@ -2,28 +2,134 @@ import hashlib
 import re
 import subprocess
 import sys
+import os
 
 from PySide6.QtSql import QSqlDatabase, QSqlQuery
-from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QDialog, QLineEdit
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QDialog, QLineEdit, QComboBox, QFileDialog, \
+    QTextEdit, QTableWidgetItem
 
 from auth import Ui_AuthWindow
 from reg import Ui_reg
 from uuid import Ui_MainWindow
 from redactor import Ui_RedWindow
+from adminpanel import Ui_AdminPanelWidget
 
 db = QSqlDatabase.addDatabase("QODBC")
 db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=users;UID=admin;PWD=1234")
 
 
+class AdminPanelWindow(QMainWindow):
+    def __init__(self):
+        super(AdminPanelWindow, self).__init__()
+        self.ui = Ui_AdminPanelWidget()
+        self.ui.setupUi(self)
+
+        self.load_data_from_database()
+
+    def load_data_from_database(self):
+        # Получаем данные из базы данных
+        query = QSqlQuery("SELECT login, role FROM users")
+
+        # Очищаем таблицу
+        self.ui.tableWidget.clearContents()
+
+        # Устанавливаем количество строк и столбцов в таблице
+        self.ui.tableWidget.setRowCount(query.size())
+        self.ui.tableWidget.setColumnCount(2)
+
+        # Заполняем таблицу данными из базы данных
+        row = 0
+        while query.next():
+            login = query.value(0)
+            role = query.value(1)
+
+            # Создаем элементы QTableWidgetItem и устанавливаем их значения
+            login_item = QTableWidgetItem(login)
+            role_item = QTableWidgetItem(role)
+
+            # Устанавливаем элементы QTableWidgetItem в таблицу
+            self.ui.tableWidget.setItem(row, 0, login_item)
+            self.ui.tableWidget.setItem(row, 1, role_item)
+
+            row += 1
+
+
 class RedWindow(QMainWindow):
-    def __int__(self):
-        super(RedWindow).__int__()
+    def __init__(self):
+        super(RedWindow, self).__init__()
+        self.ui = Ui_RedWindow()
+        self.ui.setupUi(self)
 
+        self.ui.pushButton.clicked.connect(self.update_file_list)
+        self.ui.pushButton_3.clicked.connect(self.save_file)
+        self.ui.comboBox.currentIndexChanged.connect(self.load_file_content)
+        self.ui.pushButton_2.clicked.connect(self.create_file)
+        self.ui.pushButton_6.clicked.connect(self.open_admin_panel)
 
+        self.admin_panel = None
 
+    def update_file_list(self):
+        # Очищаем ComboBox
+        self.ui.comboBox.clear()
 
+        # Получаем список txt файлов из папки проекта
+        file_list = [file for file in os.listdir() if file.endswith(".txt")]
 
+        # Добавляем файлы в ComboBox
+        self.ui.comboBox.addItems(file_list)
 
+    def load_file_content(self):
+        # Получаем выбранный файл из ComboBox
+        selected_file = self.ui.comboBox.currentText()
+
+        if selected_file:
+            # Открываем выбранный файл и считываем его содержимое
+            with open(selected_file, "r") as file:
+                file_content = file.read()
+
+            # Обновляем текст в строке self.ui.lineEdit.text()
+            self.ui.lineEdit_2.setText(file_content)
+
+    def save_file(self):
+        # Получаем текст из строки self.ui.lineEdit.text()
+        text = self.ui.lineEdit_2.text()
+
+        # Получаем выбранный файл из ComboBox
+        selected_file = self.ui.comboBox.currentText()
+
+        if selected_file:
+            # Сохраняем текст обратно в выбранный файл
+            with open(selected_file, "w") as file:
+                file.write(text)
+
+            # Выводим сообщение об успешном сохранении
+            QMessageBox.about(self, "Успех", "Файл успешно сохранен.")
+
+    def create_file(self):
+        # Получаем название файла из строки self.ui.lineEdit.text()
+        filename = self.ui.lineEdit.text()
+
+        if filename:
+            # Создаем новый txt файл с указанным названием
+            with open(filename + ".txt", "w") as file:
+                pass
+
+            # Обновляем список файлов в ComboBox
+            self.update_file_list()
+
+            # Выводим сообщение об успешном создании файла
+            QMessageBox.about(self, "Успех", "Файл успешно создан.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Введите название файла.")
+
+    def open_admin_panel(self):
+        if self.admin_panel is None:
+            self.admin_panel = QDialog(self)
+            admin_ui = Ui_AdminPanelWidget()
+            admin_ui.setupUi(self.admin_panel)
+            self.admin_panel.show()
+        else:
+            self.admin_panel.show()
 
 class RegWindow(QMainWindow):
     def __init__(self):
@@ -147,7 +253,7 @@ class AuthWindow(QMainWindow):
             if query.exec():
                 if query.next():
                     QMessageBox.about(self, "Успех!", "Авторизация успешна.")
-                    ##self.open_reg_window()
+                    self.open_red_window()
                 else:
                     QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
                     self.failed_attempts += 1
@@ -174,6 +280,11 @@ class AuthWindow(QMainWindow):
         self.close()
         self.reg_window = RegWindow()
         self.reg_window.show()
+
+    def open_red_window(self):
+        self.close()
+        self.red_window = RedWindow()
+        self.red_window.show()
 
     def update_failed_attempts(self, login):
         if db.open():
