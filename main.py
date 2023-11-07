@@ -12,7 +12,7 @@ from auth import Ui_AuthWindow
 from reg import Ui_reg
 from uuid import Ui_MainWindow
 from redactor import Ui_RedWindow
-from adminpanel import Ui_AdminPanelWidget
+from adminpanel2 import Ui_adminpanel1
 
 db = QSqlDatabase.addDatabase("QODBC")
 db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=users;UID=admin;PWD=1234")
@@ -21,37 +21,69 @@ db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=users;UI
 class AdminPanelWindow(QMainWindow):
     def __init__(self):
         super(AdminPanelWindow, self).__init__()
-        self.ui = Ui_AdminPanelWidget()
+        self.ui = Ui_adminpanel1()
         self.ui.setupUi(self)
 
-        self.ui.pushButton.clicked.connect(self.load_data_from_database)
+        self.load_data_from_database()
+
+        self.ui.pushButton.clicked.connect(self.handle_button_click)
+
 
     def load_data_from_database(self):
         # Получаем данные из базы данных
         query = QSqlQuery("SELECT login, role FROM users")
-
         # Очищаем таблицу
         self.ui.tableWidget.clearContents()
-
         # Устанавливаем количество строк и столбцов в таблице
-        self.ui.tableWidget.setRowCount(query.size())
+        self.ui.tableWidget.setRowCount(0)
         self.ui.tableWidget.setColumnCount(2)
-
         # Заполняем таблицу данными из базы данных
         row = 0
         while query.next():
             login = query.value(0)
             role = query.value(1)
-
             # Создаем элементы QTableWidgetItem и устанавливаем их значения
             login_item = QTableWidgetItem(login)
             role_item = QTableWidgetItem(role)
 
+            self.ui.tableWidget.insertRow(row)
             # Устанавливаем элементы QTableWidgetItem в таблицу
             self.ui.tableWidget.setItem(row, 0, login_item)
             self.ui.tableWidget.setItem(row, 1, role_item)
 
             row += 1
+        self.ui.tableWidget.repaint()
+        self.ui.comboBox.clear()
+
+        query = QSqlQuery("SELECT login FROM users")  # Используем новый объект QSqlQuery
+        while query.next():
+            login = query.value(0)
+            self.ui.comboBox.addItem(login)
+            self.ui.comboBox_3.addItem(login)
+
+    def handle_button_click(self):
+        # Получаем выбранный пользователь из self.ui.comboBox
+        selected_user = self.ui.comboBox.currentText()
+        # Получаем выбранную роль из self.ui.comboBox_2
+        selected_role = self.ui.comboBox_2.currentText()
+
+        if selected_user and selected_role:
+            # Обновляем роль пользователя в базе данных
+            query = QSqlQuery()
+            query.prepare("UPDATE users SET role=:role WHERE login=:login")
+            query.bindValue(":role", selected_role)
+            query.bindValue(":login", selected_user)
+
+            if query.exec():
+                db.commit()
+                QMessageBox.about(self, "Успех", "Роль успешно обновлена в базе данных.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось обновить роль в базе данных.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Выберите пользователя и роль.")
+
+        self.load_data_from_database()
+
 
 
 class RedWindow(QMainWindow):
@@ -67,6 +99,10 @@ class RedWindow(QMainWindow):
         self.ui.pushButton_6.clicked.connect(self.open_admin_panel)
 
         self.admin_panel = None
+
+    def set_credentials(self, login, password):
+        self.login = login
+        self.password = password
 
     def update_file_list(self):
         # Очищаем ComboBox
@@ -124,12 +160,16 @@ class RedWindow(QMainWindow):
 
     def open_admin_panel(self):
         if self.admin_panel is None:
-            self.admin_panel = QDialog(self)
-            admin_ui = Ui_AdminPanelWidget()
-            admin_ui.setupUi(self.admin_panel)
+            self.admin_panel = AdminPanelWindow()
             self.admin_panel.show()
         else:
             self.admin_panel.show()
+
+    def open_red_window(self):
+        self.close()
+        self.red_window = RedWindow()
+        self.red_window.show()
+
 
 class RegWindow(QMainWindow):
     def __init__(self):
@@ -240,6 +280,9 @@ class AuthWindow(QMainWindow):
         self.ui.pushButton.clicked.connect(self.check_credentials)
         self.ui.pushButton_2.clicked.connect(self.open_reg_window)
 
+        self.login = ""
+        self.password = ""
+
     def check_credentials(self):
         login = self.ui.lineEdit.text()
         password = self.ui.lineEdit_2.text()
@@ -269,6 +312,9 @@ class AuthWindow(QMainWindow):
 
         self.ui.lcdNumber.display(self.failed_attempts)
 
+        self.login = self.ui.lineEdit.text()
+        self.password = self.ui.lineEdit_2.text()
+
     @staticmethod
     def calculate_md5_hash(data):
         data = str(data)
@@ -284,6 +330,7 @@ class AuthWindow(QMainWindow):
     def open_red_window(self):
         self.close()
         self.red_window = RedWindow()
+        self.red_window.set_credentials(self.login, self.password)
         self.red_window.show()
 
     def update_failed_attempts(self, login):
