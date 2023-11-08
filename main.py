@@ -4,10 +4,11 @@ import subprocess
 import sys
 import os
 
-from PySide6.QtSql import QSqlDatabase, QSqlQuery
+from PySide6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QDialog, QLineEdit, QComboBox, QFileDialog, \
     QTextEdit, QTableWidgetItem
 
+import connection as cn
 from auth import Ui_AuthWindow
 from reg import Ui_reg
 from uuid import Ui_MainWindow
@@ -15,7 +16,7 @@ from redactor import Ui_RedWindow
 from adminpanel2 import Ui_adminpanel1
 
 db = QSqlDatabase.addDatabase("QODBC")
-db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=users;UID=admin;PWD=1234")
+db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=UserAuth;UID=admin;PWD=1234")
 
 
 class AdminPanelWindow(QMainWindow):
@@ -31,7 +32,7 @@ class AdminPanelWindow(QMainWindow):
 
     def load_data_from_database(self):
         # Получаем данные из базы данных
-        query = QSqlQuery("SELECT login, role FROM users")
+        query = QSqlQuery("SELECT login, role FROM users1")
         # Очищаем таблицу
         self.ui.tableWidget.clearContents()
         # Устанавливаем количество строк и столбцов в таблице
@@ -55,7 +56,7 @@ class AdminPanelWindow(QMainWindow):
         self.ui.tableWidget.repaint()
         self.ui.comboBox.clear()
 
-        query = QSqlQuery("SELECT login FROM users")  # Используем новый объект QSqlQuery
+        query = QSqlQuery("SELECT login FROM users1")  # Используем новый объект QSqlQuery
         while query.next():
             login = query.value(0)
             self.ui.comboBox.addItem(login)
@@ -70,7 +71,7 @@ class AdminPanelWindow(QMainWindow):
         if selected_user and selected_role:
             # Обновляем роль пользователя в базе данных
             query = QSqlQuery()
-            query.prepare("UPDATE users SET role=:role WHERE login=:login")
+            query.prepare("UPDATE users1 SET role=:role WHERE login=:login")
             query.bindValue(":role", selected_role)
             query.bindValue(":login", selected_user)
 
@@ -239,9 +240,8 @@ class RegWindow(QMainWindow):
             else:
                 hashed_password = self.calculate_md5_hash(password)  # Хеширование пароля
                 insert_query = (
-                    'INSERT INTO users (login, password, email, phone, first_name, last_name, patronymic, address, message) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-                values = [login, hashed_password, email, phone, first_name, last_name, patronymic, address,
-                          "Еще ничего не написал"]
+                    'INSERT INTO users1 (login, password, email, phone, first_name, last_name, patronymic, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                values = [login, hashed_password, email, phone, first_name, last_name, patronymic, address]
                 query.prepare(insert_query)
                 for i, value in enumerate(values):
                     query.bindValue(i, value)
@@ -289,7 +289,7 @@ class AuthWindow(QMainWindow):
 
         if db.open():
             query = QSqlQuery()
-            query.prepare("SELECT * FROM users WHERE login=:login AND password=:password")
+            query.prepare("SELECT * FROM users1 WHERE login=:login AND password=:password")
             query.bindValue(":login", login)
             query.bindValue(":password", self.calculate_md5_hash(password))
 
@@ -336,7 +336,7 @@ class AuthWindow(QMainWindow):
     def update_failed_attempts(self, login):
         if db.open():
             query = QSqlQuery()
-            query.prepare("SELECT failed_attempts FROM users WHERE login=:login")
+            query.prepare("SELECT failed_attempts FROM users1 WHERE login=:login")
             query.bindValue(":login", login)
 
             if query.exec():
@@ -346,7 +346,7 @@ class AuthWindow(QMainWindow):
                         current_attempts = int(current_attempts)
                         new_attempts = current_attempts + self.failed_attempts
 
-                        query.prepare("UPDATE users SET failed_attempts=:failed_attempts WHERE login=:login")
+                        query.prepare("UPDATE users1 SET failed_attempts=:failed_attempts WHERE login=:login")
                         query.bindValue(":failed_attempts", new_attempts)
                         query.bindValue(":login", login)
 
