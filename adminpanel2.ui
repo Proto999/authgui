@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>946</width>
-    <height>842</height>
+    <width>1125</width>
+    <height>850</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -462,7 +462,7 @@ color: rgb(38, 38, 38);</string>
      <widget class="QGroupBox" name="groupBox">
       <property name="minimumSize">
        <size>
-        <width>260</width>
+        <width>317</width>
         <height>300</height>
        </size>
       </property>
@@ -492,7 +492,7 @@ border-radius: 20px;</string>
         <widget class="QTableWidget" name="tableWidget">
          <property name="minimumSize">
           <size>
-           <width>200</width>
+           <width>300</width>
            <height>280</height>
           </size>
          </property>
@@ -510,10 +510,21 @@ color: rgb(38, 38, 38);</string>
           <property name="text">
            <string>Пользователи</string>
           </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <bold>false</bold>
+           </font>
+          </property>
          </column>
          <column>
           <property name="text">
            <string>Роли</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Статус</string>
           </property>
          </column>
         </widget>

@@ -24,7 +24,7 @@ class Ui_adminpanel1(object):
     def setupUi(self, adminpanel1):
         if not adminpanel1.objectName():
             adminpanel1.setObjectName(u"adminpanel1")
-        adminpanel1.resize(946, 842)
+        adminpanel1.resize(1125, 850)
         adminpanel1.setStyleSheet(u"background-color: rgb(83, 83, 92);")
         self.centralwidget = QWidget(adminpanel1)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -228,7 +228,7 @@ class Ui_adminpanel1(object):
 
         self.groupBox = QGroupBox(self.centralwidget)
         self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setMinimumSize(QSize(260, 300))
+        self.groupBox.setMinimumSize(QSize(317, 300))
         self.groupBox.setStyleSheet(u"background-color: rgb(44, 47, 51);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 20px;")
@@ -239,14 +239,20 @@ class Ui_adminpanel1(object):
         self.horizontalLayout.addItem(self.horizontalSpacer_18)
 
         self.tableWidget = QTableWidget(self.groupBox)
-        if (self.tableWidget.columnCount() < 2):
-            self.tableWidget.setColumnCount(2)
+        if (self.tableWidget.columnCount() < 3):
+            self.tableWidget.setColumnCount(3)
+        font4 = QFont()
+        font4.setFamilies([u"Segoe UI"])
+        font4.setBold(False)
         __qtablewidgetitem = QTableWidgetItem()
+        __qtablewidgetitem.setFont(font4);
         self.tableWidget.setHorizontalHeaderItem(0, __qtablewidgetitem)
         __qtablewidgetitem1 = QTableWidgetItem()
         self.tableWidget.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        __qtablewidgetitem2 = QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(2, __qtablewidgetitem2)
         self.tableWidget.setObjectName(u"tableWidget")
-        self.tableWidget.setMinimumSize(QSize(200, 280))
+        self.tableWidget.setMinimumSize(QSize(300, 280))
         self.tableWidget.setMaximumSize(QSize(200, 16777215))
         self.tableWidget.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
 "color: rgb(38, 38, 38);")
@@ -393,6 +399,8 @@ class Ui_adminpanel1(object):
         ___qtablewidgetitem.setText(QCoreApplication.translate("adminpanel1", u"\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0438", None));
         ___qtablewidgetitem1 = self.tableWidget.horizontalHeaderItem(1)
         ___qtablewidgetitem1.setText(QCoreApplication.translate("adminpanel1", u"\u0420\u043e\u043b\u0438", None));
+        ___qtablewidgetitem2 = self.tableWidget.horizontalHeaderItem(2)
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("adminpanel1", u"\u0421\u0442\u0430\u0442\u0443\u0441", None));
         self.groupBox_4.setTitle("")
         self.label_7.setText(QCoreApplication.translate("adminpanel1", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f:", None))
         self.label_8.setText(QCoreApplication.translate("adminpanel1", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0444\u0430\u0439\u043b:", None))
