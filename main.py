@@ -248,6 +248,15 @@ class RegWindow(QMainWindow):
                 if query.exec():
                     db.commit()
                     QMessageBox.about(self, "Успех", "Пользователь успешно зарегистрирован!")
+                    # Записываем значение "active" в столбец status
+                    update_query = QSqlQuery()
+                    update_query.prepare("UPDATE users1 SET status=:status WHERE login=:login")
+                    update_query.bindValue(":status", "active")
+                    update_query.bindValue(":login", login)
+                    if update_query.exec():
+                        db.commit()
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Не удалось обновить статус пользователя.")
                 else:
                     print("Ошибка выполнения запроса на вставку нового пользователя.")
         else:
@@ -289,14 +298,29 @@ class AuthWindow(QMainWindow):
 
         if db.open():
             query = QSqlQuery()
-            query.prepare("SELECT * FROM users1 WHERE login=:login AND password=:password")
+            query.prepare("SELECT status FROM users1 WHERE login=:login")
             query.bindValue(":login", login)
-            query.bindValue(":password", self.calculate_md5_hash(password))
 
             if query.exec():
                 if query.next():
-                    QMessageBox.about(self, "Успех!", "Авторизация успешна.")
-                    self.open_red_window()
+                    status = query.value(0)  # Получаем значение статуса пользователя
+                    if status == "banned":
+                        QMessageBox.about(self, "Ошибка", "Вам запрещен доступ.")
+                        self.close()
+                    elif status == "active":
+                        if self.verify_credentials(login, password):
+                            QMessageBox.about(self, "Успех!", "Авторизация успешна.")
+                            self.open_red_window()
+                        else:
+                            QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
+                            self.failed_attempts += 1
+                            if self.failed_attempts >= 3:
+                                QMessageBox.about(self, "Ошибка", "Превышено количество попыток.")
+                                self.close()
+                            else:
+                                self.update_failed_attempts(login)
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Неизвестный статус пользователя.")
                 else:
                     QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
                     self.failed_attempts += 1
@@ -314,6 +338,17 @@ class AuthWindow(QMainWindow):
 
         self.login = self.ui.lineEdit.text()
         self.password = self.ui.lineEdit_2.text()
+
+    def verify_credentials(self, login, password):
+        query = QSqlQuery()
+        query.prepare("SELECT * FROM users1 WHERE login=:login AND password=:password")
+        query.bindValue(":login", login)
+        query.bindValue(":password", self.calculate_md5_hash(password))
+
+        if query.exec():
+            return query.next()
+        else:
+            return False
 
     @staticmethod
     def calculate_md5_hash(data):
