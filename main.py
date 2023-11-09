@@ -32,35 +32,41 @@ class AdminPanelWindow(QMainWindow):
 
     def load_data_from_database(self):
         # Получаем данные из базы данных
-        query = QSqlQuery("SELECT login, role FROM users1")
+        query = QSqlQuery("SELECT login, role, status FROM users1")
         # Очищаем таблицу
         self.ui.tableWidget.clearContents()
         # Устанавливаем количество строк и столбцов в таблице
         self.ui.tableWidget.setRowCount(0)
-        self.ui.tableWidget.setColumnCount(2)
+        self.ui.tableWidget.setColumnCount(3)
         # Заполняем таблицу данными из базы данных
         row = 0
         while query.next():
             login = query.value(0)
             role = query.value(1)
+            status = query.value(2)
             # Создаем элементы QTableWidgetItem и устанавливаем их значения
             login_item = QTableWidgetItem(login)
             role_item = QTableWidgetItem(role)
+            status_item = QTableWidgetItem(status)
 
             self.ui.tableWidget.insertRow(row)
             # Устанавливаем элементы QTableWidgetItem в таблицу
             self.ui.tableWidget.setItem(row, 0, login_item)
             self.ui.tableWidget.setItem(row, 1, role_item)
+            self.ui.tableWidget.setItem(row, 2, status_item)
 
             row += 1
         self.ui.tableWidget.repaint()
         self.ui.comboBox.clear()
+        self.ui.comboBox_3.clear()
+        self.ui.comboBox_5.clear()
 
         query = QSqlQuery("SELECT login FROM users1")  # Используем новый объект QSqlQuery
         while query.next():
             login = query.value(0)
             self.ui.comboBox.addItem(login)
             self.ui.comboBox_3.addItem(login)
+            self.ui.comboBox_5.addItem(login)
 
     def handle_button_click(self):
         # Получаем выбранный пользователь из self.ui.comboBox
