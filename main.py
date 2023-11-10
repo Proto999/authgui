@@ -14,9 +14,76 @@ from reg import Ui_reg
 from uuid import Ui_MainWindow
 from redactor import Ui_RedWindow
 from adminpanel2 import Ui_adminpanel1
+from moderpanel import Ui_ModerPanel
 
 db = QSqlDatabase.addDatabase("QODBC")
 db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=UserAuth;UID=admin;PWD=1234")
+
+
+class ModerPanelWindow(QMainWindow):
+    def __init__(self):
+        super(ModerPanelWindow, self).__init__()
+        self.ui = Ui_ModerPanel()
+        self.ui.setupUi(self)
+
+        self.load_data_from_database()
+
+        self.ui.pushButton_2.clicked.connect(self.save_status)
+        # self.ui.pushButton_3.clicked.connect(self.)
+
+    def load_data_from_database(self):
+        query = QSqlQuery("SELECT login, role, status FROM users1")
+        self.ui.tableWidget.clearContents()
+        self.ui.tableWidget.setRowCount(0)
+        self.ui.tableWidget.setColumnCount(3)
+        row = 0
+        while query.next():
+            login = query.value(0)
+            role = query.value(1)
+            status = query.value(2)
+
+            login_item = QTableWidgetItem(login)
+            role_item = QTableWidgetItem(role)
+            status_item = QTableWidgetItem(status)
+
+            self.ui.tableWidget.insertRow(row)
+
+            self.ui.tableWidget.setItem(row, 0, login_item)
+            self.ui.tableWidget.setItem(row, 1, role_item)
+            self.ui.tableWidget.setItem(row, 2, status_item)
+
+            row += 1
+        self.ui.tableWidget.repaint()
+
+        self.ui.comboBox_3.clear()
+        self.ui.comboBox_5.clear()
+
+        query = QSqlQuery("SELECT login FROM users1")
+        while query.next():
+            login = query.value(0)
+
+            self.ui.comboBox_3.addItem(login)
+            self.ui.comboBox_5.addItem(login)
+
+    def save_status(self):
+        selected_user = self.ui.comboBox_3.currentText()
+        selected_status = self.ui.comboBox_4.currentText()
+
+        if selected_user and selected_status:
+            query = QSqlQuery()
+            query.prepare("UPDATE users1 SET status=:status WHERE login=:login")
+            query.bindValue(":status", selected_status)
+            query.bindValue(":login", selected_user)
+
+            if query.exec():
+                db.commit()
+                QMessageBox.about(self, "Успех", "Статус успешно обновлен в базе данных.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось обновить статус в базе данных.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Выберите пользователя и статус.")
+
+        self.load_data_from_database()
 
 
 class AdminPanelWindow(QMainWindow):
@@ -30,7 +97,6 @@ class AdminPanelWindow(QMainWindow):
         self.ui.pushButton.clicked.connect(self.handle_button_click)
         self.ui.pushButton_2.clicked.connect(self.save_status)
         self.ui.pushButton_3.clicked.connect(self.handle_button_click)
-
 
     def load_data_from_database(self):
         # Получаем данные из базы данных
@@ -114,10 +180,10 @@ class AdminPanelWindow(QMainWindow):
         self.load_data_from_database()
 
 
-
 class RedWindow(QMainWindow):
     def __init__(self):
         super(RedWindow, self).__init__()
+        self.red_window = None
         self.ui = Ui_RedWindow()
         self.ui.setupUi(self)
 
@@ -126,63 +192,46 @@ class RedWindow(QMainWindow):
         self.ui.comboBox.currentIndexChanged.connect(self.load_file_content)
         self.ui.pushButton_2.clicked.connect(self.create_file)
         self.ui.pushButton_6.clicked.connect(self.open_admin_panel)
+        self.ui.pushButton_5.clicked.connect(self.open_moder_panel)
 
         self.admin_panel = None
+        self.moder_panel = None
+
+
 
     def set_credentials(self, login, password):
         self.login = login
+        print(login)
         self.password = password
+        print(password)
 
     def update_file_list(self):
-        # Очищаем ComboBox
         self.ui.comboBox.clear()
-
-        # Получаем список txt файлов из папки проекта
         file_list = [file for file in os.listdir() if file.endswith(".txt")]
-
-        # Добавляем файлы в ComboBox
         self.ui.comboBox.addItems(file_list)
 
     def load_file_content(self):
-        # Получаем выбранный файл из ComboBox
         selected_file = self.ui.comboBox.currentText()
-
         if selected_file:
-            # Открываем выбранный файл и считываем его содержимое
             with open(selected_file, "r") as file:
                 file_content = file.read()
-
-            # Обновляем текст в строке self.ui.lineEdit.text()
             self.ui.lineEdit_2.setText(file_content)
 
     def save_file(self):
-        # Получаем текст из строки self.ui.lineEdit.text()
         text = self.ui.lineEdit_2.text()
-
-        # Получаем выбранный файл из ComboBox
         selected_file = self.ui.comboBox.currentText()
-
         if selected_file:
-            # Сохраняем текст обратно в выбранный файл
             with open(selected_file, "w") as file:
                 file.write(text)
-
-            # Выводим сообщение об успешном сохранении
             QMessageBox.about(self, "Успех", "Файл успешно сохранен.")
 
     def create_file(self):
-        # Получаем название файла из строки self.ui.lineEdit.text()
         filename = self.ui.lineEdit.text()
 
         if filename:
-            # Создаем новый txt файл с указанным названием
             with open(filename + ".txt", "w") as file:
                 pass
-
-            # Обновляем список файлов в ComboBox
             self.update_file_list()
-
-            # Выводим сообщение об успешном создании файла
             QMessageBox.about(self, "Успех", "Файл успешно создан.")
         else:
             QMessageBox.about(self, "Ошибка", "Введите название файла.")
@@ -193,6 +242,31 @@ class RedWindow(QMainWindow):
             self.admin_panel.show()
         else:
             self.admin_panel.show()
+
+    def open_moder_panel(self):
+        auth_window = AuthWindow()
+        login = auth_window.login
+        print(login)
+
+        if db.open():
+            query = QSqlQuery()
+            query.prepare("SELECT role FROM users1 WHERE login=:login")
+            query.bindValue(":login", login)
+
+            if query.exec():
+                if query.next():
+                    role = query.value(0)  # Получаем значение роли пользователя
+                    if role == "Модератор":
+                        QMessageBox.about(self, "Успех!", "Доступ разрешен. Открываю административную панель.")
+                        # Открываем административную панель
+                    else:
+                        QMessageBox.about(self, "Ошибка", "У вас нет прав доступа к административной панели.")
+                else:
+                    QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
     def open_red_window(self):
         self.close()
