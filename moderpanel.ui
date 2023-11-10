@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>adminpanel1</class>
- <widget class="QMainWindow" name="adminpanel1">
+ <class>ModerPanel</class>
+ <widget class="QMainWindow" name="ModerPanel">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Панель администратора</string>
+   <string>Панель модератора</string>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: rgb(83, 83, 92);</string>
