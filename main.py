@@ -28,7 +28,7 @@ class AdminPanelWindow(QMainWindow):
         self.load_data_from_database()
 
         self.ui.pushButton.clicked.connect(self.handle_button_click)
-        self.ui.pushButton_2.clicked.connect(self.handle_button_click)
+        self.ui.pushButton_2.clicked.connect(self.save_status)
         self.ui.pushButton_3.clicked.connect(self.handle_button_click)
 
 
