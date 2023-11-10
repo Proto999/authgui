@@ -28,6 +28,8 @@ class AdminPanelWindow(QMainWindow):
         self.load_data_from_database()
 
         self.ui.pushButton.clicked.connect(self.handle_button_click)
+        self.ui.pushButton_2.clicked.connect(self.handle_button_click)
+        self.ui.pushButton_3.clicked.connect(self.handle_button_click)
 
 
     def load_data_from_database(self):
@@ -88,6 +90,26 @@ class AdminPanelWindow(QMainWindow):
                 QMessageBox.about(self, "Ошибка", "Не удалось обновить роль в базе данных.")
         else:
             QMessageBox.about(self, "Ошибка", "Выберите пользователя и роль.")
+
+        self.load_data_from_database()
+
+    def save_status(self):
+        selected_user = self.ui.comboBox_3.currentText()
+        selected_status = self.ui.comboBox_4.currentText()
+
+        if selected_user and selected_status:
+            query = QSqlQuery()
+            query.prepare("UPDATE users1 SET status=:status WHERE login=:login")
+            query.bindValue(":status", selected_status)
+            query.bindValue(":login", selected_user)
+
+            if query.exec():
+                db.commit()
+                QMessageBox.about(self, "Успех", "Статус успешно обновлен в базе данных.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось обновить статус в базе данных.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Выберите пользователя и статус.")
 
         self.load_data_from_database()
 

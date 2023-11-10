@@ -297,7 +297,7 @@ color: rgb(135, 135, 135);
 border-radius: 5px;</string>
          </property>
          <property name="text">
-          <string>Выберите файл:</string>
+          <string>Выберите статус:</string>
          </property>
         </widget>
        </item>
