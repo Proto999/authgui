@@ -4,11 +4,12 @@ import subprocess
 import sys
 import os
 
+import PySide6
 from PySide6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QDialog, QLineEdit, QComboBox, QFileDialog, \
     QTextEdit, QTableWidgetItem
+from PySide6.QtCore import QObject, Signal
 
-import connection as cn
 from auth import Ui_AuthWindow
 from reg import Ui_reg
 from uuid import Ui_MainWindow
@@ -18,6 +19,125 @@ from moderpanel import Ui_ModerPanel
 
 db = QSqlDatabase.addDatabase("QODBC")
 db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=UserAuth;UID=admin;PWD=1234")
+
+
+class AuthWindow(QMainWindow):
+
+    def __init__(self):
+        super(AuthWindow, self).__init__()
+
+        self.ui = Ui_AuthWindow()
+        self.ui.setupUi(self)
+
+        self.failed_attempts = 0  # Счетчик неудачных попыток входа
+        self.ui.lcdNumber.display(self.failed_attempts)  # Отображение счетчика на QLCDNumber
+
+        self.ui.pushButton.clicked.connect(self.check_credentials)
+        self.ui.pushButton_2.clicked.connect(self.open_reg_window)
+
+        self.login = ""
+        self.password = ""
+
+    def check_credentials(self):
+        login = self.ui.lineEdit.text()
+        password = self.ui.lineEdit_2.text()
+
+        if db.open():
+            query = QSqlQuery()
+            query.prepare("SELECT status FROM users1 WHERE login=:login")
+            query.bindValue(":login", login)
+
+            if query.exec():
+                if query.next():
+                    status = query.value(0)  # Получаем значение статуса пользователя
+                    if status == "banned":
+                        QMessageBox.about(self, "Ошибка", "Вам запрещен доступ.")
+                        self.close()
+                    elif status == "active":
+                        query.prepare("SELECT * FROM users1 WHERE login=:login AND password=:password")
+                        query.bindValue(":login", login)
+
+                        query.bindValue(":password", self.calculate_md5_hash(password))
+
+                        if query.exec() and query.next():
+                            QMessageBox.about(self, "Успех!", "Авторизация успешна.")
+
+                            print(login)
+                            self.open_red_window(login,password)
+                            print(password)
+                        else:
+                            QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
+                            self.failed_attempts += 1
+                            if self.failed_attempts >= 3:
+                                QMessageBox.about(self, "Ошибка", "Превышено количество попыток.")
+                                self.close()
+                            else:
+                                self.update_failed_attempts(login)
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Неизвестный статус пользователя.")
+                else:
+                    QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
+                    self.failed_attempts += 1
+                    if self.failed_attempts >= 3:
+                        QMessageBox.about(self, "Ошибка", "Превышено количество попыток.")
+                        self.close()
+                    else:
+                        self.update_failed_attempts(login)
+            else:
+                QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+        self.ui.lcdNumber.display(self.failed_attempts)
+
+        self.login = self.ui.lineEdit.text()
+        self.password = self.ui.lineEdit_2.text()
+
+    @staticmethod
+    def calculate_md5_hash(data):
+        data = str(data)
+        md5_hash = hashlib.md5()
+        md5_hash.update(data.encode('utf-8'))
+        return md5_hash.hexdigest()
+
+    def open_reg_window(self):
+        self.close()
+        self.reg_window = RegWindow()
+        self.reg_window.show()
+
+    def open_red_window(self, login, password):
+        self.close()
+        self.red_window = RedWindow(login, password)
+        self.red_window.show()
+
+    def update_failed_attempts(self, login):
+        if db.open():
+            query = QSqlQuery()
+            query.prepare("SELECT failed_attempts FROM users1 WHERE login=:login")
+            query.bindValue(":login", login)
+
+            if query.exec():
+                if query.next():
+                    current_attempts = query.value(0)
+                    if current_attempts is not None:
+                        current_attempts = int(current_attempts)
+                        new_attempts = current_attempts + self.failed_attempts
+
+                        query.prepare("UPDATE users1 SET failed_attempts=:failed_attempts WHERE login=:login")
+                        query.bindValue(":failed_attempts", new_attempts)
+                        query.bindValue(":login", login)
+
+                        if query.exec():
+                            db.commit()
+                        else:
+                            QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+
+                else:
+                    QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
 
 class ModerPanelWindow(QMainWindow):
@@ -181,8 +301,12 @@ class AdminPanelWindow(QMainWindow):
 
 
 class RedWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, login, password):
         super(RedWindow, self).__init__()
+        self.moder_panel = None
+        self.login = login
+        self.password = password
+
         self.red_window = None
         self.ui = Ui_RedWindow()
         self.ui.setupUi(self)
@@ -199,11 +323,6 @@ class RedWindow(QMainWindow):
 
 
 
-    def set_credentials(self, login, password):
-        self.login = login
-        print(login)
-        self.password = password
-        print(password)
 
     def update_file_list(self):
         self.ui.comboBox.clear()
@@ -244,34 +363,27 @@ class RedWindow(QMainWindow):
             self.admin_panel.show()
 
     def open_moder_panel(self):
-        auth_window = AuthWindow()
-        login = auth_window.login
-        print(login)
+        if self.moder_panel is None:
+            if db.open():
+                query = QSqlQuery()
+                query.prepare("SELECT role FROM users1 WHERE login=:login")
+                query.bindValue(":login", self.login)
 
-        if db.open():
-            query = QSqlQuery()
-            query.prepare("SELECT role FROM users1 WHERE login=:login")
-            query.bindValue(":login", login)
-
-            if query.exec():
-                if query.next():
-                    role = query.value(0)  # Получаем значение роли пользователя
-                    if role == "Модератор":
-                        QMessageBox.about(self, "Успех!", "Доступ разрешен. Открываю административную панель.")
-                        # Открываем административную панель
+                if query.exec():
+                    if query.next():
+                        role = query.value(0)  # Получаем значение роли пользователя
+                        if role == "Модератор":
+                            QMessageBox.about(self, "Успех!", "Доступ разрешен. Открываю панель модератора.")
+                            self.moder_panel = ModerPanelWindow()
+                            self.moder_panel.show()
+                        else:
+                            QMessageBox.about(self, "Ошибка", "У вас нет прав доступа к панели модератора.")
                     else:
-                        QMessageBox.about(self, "Ошибка", "У вас нет прав доступа к административной панели.")
+                        QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
                 else:
-                    QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
+                    QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
             else:
-                QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
-        else:
-            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
-
-    def open_red_window(self):
-        self.close()
-        self.red_window = RedWindow()
-        self.red_window.show()
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
 
 class RegWindow(QMainWindow):
@@ -379,127 +491,6 @@ class RegWindow(QMainWindow):
         self.auth_window.show()
 
 
-class AuthWindow(QMainWindow):
-    def __init__(self):
-        super(AuthWindow, self).__init__()
-        self.ui = Ui_AuthWindow()
-        self.ui.setupUi(self)
-
-        self.failed_attempts = 0  # Счетчик неудачных попыток входа
-        self.ui.lcdNumber.display(self.failed_attempts)  # Отображение счетчика на QLCDNumber
-
-        self.ui.pushButton.clicked.connect(self.check_credentials)
-        self.ui.pushButton_2.clicked.connect(self.open_reg_window)
-
-        self.login = ""
-        self.password = ""
-
-    def check_credentials(self):
-        login = self.ui.lineEdit.text()
-        password = self.ui.lineEdit_2.text()
-
-        if db.open():
-            query = QSqlQuery()
-            query.prepare("SELECT status FROM users1 WHERE login=:login")
-            query.bindValue(":login", login)
-
-            if query.exec():
-                if query.next():
-                    status = query.value(0)  # Получаем значение статуса пользователя
-                    if status == "banned":
-                        QMessageBox.about(self, "Ошибка", "Вам запрещен доступ.")
-                        self.close()
-                    elif status == "active":
-                        if self.verify_credentials(login, password):
-                            QMessageBox.about(self, "Успех!", "Авторизация успешна.")
-                            self.open_red_window()
-                        else:
-                            QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
-                            self.failed_attempts += 1
-                            if self.failed_attempts >= 3:
-                                QMessageBox.about(self, "Ошибка", "Превышено количество попыток.")
-                                self.close()
-                            else:
-                                self.update_failed_attempts(login)
-                    else:
-                        QMessageBox.about(self, "Ошибка", "Неизвестный статус пользователя.")
-                else:
-                    QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
-                    self.failed_attempts += 1
-                    if self.failed_attempts >= 3:
-                        QMessageBox.about(self, "Ошибка", "Превышено количество попыток.")
-                        self.close()
-                    else:
-                        self.update_failed_attempts(login)
-            else:
-                QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
-        else:
-            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
-
-        self.ui.lcdNumber.display(self.failed_attempts)
-
-        self.login = self.ui.lineEdit.text()
-        self.password = self.ui.lineEdit_2.text()
-
-    def verify_credentials(self, login, password):
-        query = QSqlQuery()
-        query.prepare("SELECT * FROM users1 WHERE login=:login AND password=:password")
-        query.bindValue(":login", login)
-        query.bindValue(":password", self.calculate_md5_hash(password))
-
-        if query.exec():
-            return query.next()
-        else:
-            return False
-
-    @staticmethod
-    def calculate_md5_hash(data):
-        data = str(data)
-        md5_hash = hashlib.md5()
-        md5_hash.update(data.encode('utf-8'))
-        return md5_hash.hexdigest()
-
-    def open_reg_window(self):
-        self.close()
-        self.reg_window = RegWindow()
-        self.reg_window.show()
-
-    def open_red_window(self):
-        self.close()
-        self.red_window = RedWindow()
-        self.red_window.set_credentials(self.login, self.password)
-        self.red_window.show()
-
-    def update_failed_attempts(self, login):
-        if db.open():
-            query = QSqlQuery()
-            query.prepare("SELECT failed_attempts FROM users1 WHERE login=:login")
-            query.bindValue(":login", login)
-
-            if query.exec():
-                if query.next():
-                    current_attempts = query.value(0)
-                    if current_attempts is not None:
-                        current_attempts = int(current_attempts)
-                        new_attempts = current_attempts + self.failed_attempts
-
-                        query.prepare("UPDATE users1 SET failed_attempts=:failed_attempts WHERE login=:login")
-                        query.bindValue(":failed_attempts", new_attempts)
-                        query.bindValue(":login", login)
-
-                        if query.exec():
-                            db.commit()
-                        else:
-                            QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
-
-                else:
-                    QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
-            else:
-                QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
-        else:
-            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
-
-
 class UUID(QMainWindow):
     def __init__(self):
         super(UUID, self).__init__()
@@ -533,4 +524,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     uuid_window = UUID()
     uuid_window.show()
-    app.exec()
+    sys.exit(app.exec())

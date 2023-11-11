@@ -26,7 +26,7 @@ class Ui_AuthWindow(object):
         AuthWindow.resize(1000, 700)
         font = QFont()
         font.setFamilies([u"gg sans"])
-        font.setBold(True)
+        font.setBold(False)
         AuthWindow.setFont(font)
         AuthWindow.setStyleSheet(u"background-color: rgb(114, 137, 218);")
         self.centralwidget = QWidget(AuthWindow)
@@ -46,8 +46,9 @@ class Ui_AuthWindow(object):
         self.pushButton_3.setMaximumSize(QSize(275, 76))
         font1 = QFont()
         font1.setFamilies([u"gg sans"])
-        font1.setPointSize(16)
+        font1.setPointSize(14)
         font1.setBold(True)
+        font1.setUnderline(True)
         self.pushButton_3.setFont(font1)
         self.pushButton_3.setStyleSheet(u"background-color: rgb(198, 0, 0);\n"
 "color: rgb(255, 255, 255);\n"
@@ -81,7 +82,8 @@ class Ui_AuthWindow(object):
         self.gridLayout_3.setObjectName(u"gridLayout_3")
         self.lineEdit_2 = QLineEdit(self.groupBox)
         self.lineEdit_2.setObjectName(u"lineEdit_2")
-        self.lineEdit_2.setMinimumSize(QSize(225, 0))
+        self.lineEdit_2.setMinimumSize(QSize(225, 25))
+        self.lineEdit_2.setFont(font2)
         self.lineEdit_2.setStyleSheet(u"background-color: rgb(255, 255, 255);\n"
 "border-radius: 5px;\n"
 "color: rgb(0, 0, 0);")
@@ -106,6 +108,12 @@ class Ui_AuthWindow(object):
 
         self.lineEdit = QLineEdit(self.groupBox)
         self.lineEdit.setObjectName(u"lineEdit")
+        self.lineEdit.setMinimumSize(QSize(225, 25))
+        font4 = QFont()
+        font4.setFamilies([u"gg sans"])
+        font4.setPointSize(12)
+        font4.setBold(True)
+        self.lineEdit.setFont(font4)
         self.lineEdit.setStyleSheet(u"background-color: rgb(255, 255, 255);\n"
 "border-radius: 5px;\n"
 "color: rgb(0, 0, 0);")
@@ -142,11 +150,12 @@ class Ui_AuthWindow(object):
         self.groupBox_2 = QGroupBox(self.centralwidget)
         self.groupBox_2.setObjectName(u"groupBox_2")
         self.groupBox_2.setMinimumSize(QSize(420, 180))
-        self.groupBox_2.setMaximumSize(QSize(420, 181))
+        self.groupBox_2.setMaximumSize(QSize(16777215, 16777215))
         self.groupBox_2.setStyleSheet(u"background-color: rgb(44, 47, 51);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 20px;\n"
-"")
+"QPushButton#pushButton{\n"
+"	border-color: rgb(77, 77, 115);}")
         self.gridLayout_2 = QGridLayout(self.groupBox_2)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.horizontalSpacer_5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -173,11 +182,11 @@ class Ui_AuthWindow(object):
         self.pushButton.setObjectName(u"pushButton")
         self.pushButton.setMinimumSize(QSize(350, 50))
         self.pushButton.setMaximumSize(QSize(225, 50))
-        font4 = QFont()
-        font4.setFamilies([u"gg sans"])
-        font4.setPointSize(14)
-        font4.setBold(True)
-        self.pushButton.setFont(font4)
+        font5 = QFont()
+        font5.setFamilies([u"gg sans"])
+        font5.setPointSize(14)
+        font5.setBold(True)
+        self.pushButton.setFont(font5)
         self.pushButton.setStyleSheet(u"background-color: rgb(114, 137, 218);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 20px;")
@@ -188,7 +197,7 @@ class Ui_AuthWindow(object):
         self.pushButton_2.setObjectName(u"pushButton_2")
         self.pushButton_2.setMinimumSize(QSize(350, 50))
         self.pushButton_2.setMaximumSize(QSize(351, 51))
-        self.pushButton_2.setFont(font4)
+        self.pushButton_2.setFont(font5)
         self.pushButton_2.setStyleSheet(u"background-color: rgb(114, 137, 218);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 20px;")

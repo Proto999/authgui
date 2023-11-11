@@ -61,8 +61,9 @@
       <property name="font">
        <font>
         <family>gg sans</family>
-        <pointsize>16</pointsize>
+        <pointsize>14</pointsize>
         <bold>true</bold>
+        <underline>true</underline>
        </font>
       </property>
       <property name="styleSheet">
@@ -134,7 +135,7 @@ border-radius: 20px;
          <property name="font">
           <font>
            <family>gg sans</family>
-           <pointsize>11</pointsize>
+           <pointsize>13</pointsize>
            <bold>true</bold>
           </font>
          </property>
@@ -192,7 +193,7 @@ color: rgb(0, 0, 0);</string>
          <property name="font">
           <font>
            <family>gg sans</family>
-           <pointsize>11</pointsize>
+           <pointsize>12</pointsize>
            <bold>true</bold>
           </font>
          </property>
@@ -291,8 +292,8 @@ color: rgb(0, 0, 0);</string>
       </property>
       <property name="maximumSize">
        <size>
-        <width>420</width>
-        <height>181</height>
+        <width>16777215</width>
+        <height>16777215</height>
        </size>
       </property>
       <property name="styleSheet">

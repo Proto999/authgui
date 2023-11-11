@@ -60,47 +60,32 @@ class Ui_MainWindow(object):
 "")
         self.gridLayout = QGridLayout(self.groupBox)
         self.gridLayout.setObjectName(u"gridLayout")
-        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.gridLayout.addItem(self.horizontalSpacer_3, 1, 0, 1, 1)
-
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        self.gridLayout.addItem(self.verticalSpacer, 4, 1, 1, 1)
-
-        self.verticalSpacer_3 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        self.gridLayout.addItem(self.verticalSpacer_3, 2, 1, 1, 1)
-
-        self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        self.gridLayout.addItem(self.verticalSpacer_2, 0, 1, 1, 1)
-
         self.pushButton = QPushButton(self.groupBox)
         self.pushButton.setObjectName(u"pushButton")
         self.pushButton.setMinimumSize(QSize(250, 70))
         font2 = QFont()
         font2.setFamilies([u"gg sans"])
-        font2.setPointSize(11)
+        font2.setPointSize(16)
         font2.setBold(True)
+        font2.setUnderline(True)
         self.pushButton.setFont(font2)
         self.pushButton.setStyleSheet(u"background-color: rgb(114, 137, 218);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 20px;")
 
-        self.gridLayout.addWidget(self.pushButton, 3, 1, 1, 1)
+        self.gridLayout.addWidget(self.pushButton, 2, 0, 1, 1)
 
         self.label = QLabel(self.groupBox)
         self.label.setObjectName(u"label")
-        self.label.setFont(font1)
+        font3 = QFont()
+        font3.setFamilies([u"gg sans"])
+        font3.setPointSize(17)
+        font3.setBold(True)
+        self.label.setFont(font3)
         self.label.setScaledContents(False)
         self.label.setWordWrap(True)
 
-        self.gridLayout.addWidget(self.label, 1, 1, 1, 1)
-
-        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.gridLayout.addItem(self.horizontalSpacer_4, 1, 2, 1, 1)
+        self.gridLayout.addWidget(self.label, 1, 0, 1, 1)
 
 
         self.horizontalLayout.addWidget(self.groupBox)
