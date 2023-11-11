@@ -3,6 +3,7 @@ import re
 import subprocess
 import sys
 import os
+import datetime
 
 import PySide6
 from PySide6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
@@ -63,7 +64,7 @@ class AuthWindow(QMainWindow):
                             QMessageBox.about(self, "Успех!", "Авторизация успешна.")
 
                             print(login)
-                            self.open_red_window(login,password)
+                            self.open_red_window(login, password)
                             print(password)
                         else:
                             QMessageBox.about(self, "Ошибка", "Неправильные учетные данные.")
@@ -216,7 +217,7 @@ class AdminPanelWindow(QMainWindow):
 
         self.ui.pushButton.clicked.connect(self.handle_button_click)
         self.ui.pushButton_2.clicked.connect(self.save_status)
-        self.ui.pushButton_3.clicked.connect(self.handle_button_click)
+        self.ui.pushButton_3.clicked.connect(self.save_user_file)
 
     def load_data_from_database(self):
         # Получаем данные из базы данных
@@ -255,6 +256,40 @@ class AdminPanelWindow(QMainWindow):
             self.ui.comboBox.addItem(login)
             self.ui.comboBox_3.addItem(login)
             self.ui.comboBox_5.addItem(login)
+
+        query = QSqlQuery("SELECT file_name FROM files")
+        while query.next():
+            file_name = query.value(0)
+            self.ui.comboBox_6.addItem(file_name)
+
+    def save_user_file(self):
+        user_id = self.get_user_id(self.ui.comboBox_5.currentText())  # Получаем user_id выбранного имени пользователя
+        file_name = self.ui.comboBox_6.currentText()  # Получаем выбранное имя файла
+
+        if user_id and file_name:
+            if db.open():
+                query = QSqlQuery()
+                query.prepare("SELECT id FROM files WHERE file_name = :file_name")
+                query.bindValue(":file_name", file_name)
+
+                if query.exec() and query.next():
+                    file_id = query.value(0)  # Получаем file_id выбранного имени файла
+
+                    query.prepare("INSERT INTO users_files (user_id, file_id) VALUES (:user_id, :file_id)")
+                    query.bindValue(":user_id", user_id)
+                    query.bindValue(":file_id", file_id)
+
+                    if query.exec():
+                        db.commit()
+                        QMessageBox.about(self, "Успех", "Запись успешно сохранена в базе данных.")
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Не удалось сохранить запись в базе данных.")
+                else:
+                    QMessageBox.about(self, "Ошибка", "Не удалось получить идентификатор файла.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Выберите имя пользователя и файл.")
 
     def handle_button_click(self):
         # Получаем выбранный пользователь из self.ui.comboBox
@@ -299,6 +334,17 @@ class AdminPanelWindow(QMainWindow):
 
         self.load_data_from_database()
 
+    def get_user_id(self, login):
+        if db.open():
+            query = QSqlQuery()
+            query.prepare("SELECT id FROM users1 WHERE login = :login")
+            query.bindValue(":login", login)
+
+            if query.exec() and query.next():
+                user_id = query.value(0)
+                return user_id
+
+        return None
 
 class RedWindow(QMainWindow):
     def __init__(self, login, password):
@@ -321,13 +367,32 @@ class RedWindow(QMainWindow):
         self.admin_panel = None
         self.moder_panel = None
 
-
-
-
     def update_file_list(self):
-        self.ui.comboBox.clear()
-        file_list = [file for file in os.listdir() if file.endswith(".txt")]
-        self.ui.comboBox.addItems(file_list)
+        user_id = self.get_user_id(self.login)  # Получаем user_id
+
+        if user_id:
+            if db.open():
+                query = QSqlQuery()
+                query.prepare(
+                    "SELECT file_name FROM files JOIN users_files ON files.id = users_files.file_id WHERE users_files.user_id = :user_id")
+                query.bindValue(":user_id", user_id)
+
+                if query.exec():
+                    self.ui.comboBox.clear()  # Очищаем combobox
+
+                    file_list = []
+                    while query.next():
+                        file_name = query.value(0)
+                        file_list.append(file_name)
+
+                    self.ui.comboBox.addItems(file_list)
+
+                else:
+                    QMessageBox.about(self, "Ошибка", "Не удалось выполнить запрос к базе данных.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Не удалось получить идентификатор пользователя.")
 
     def load_file_content(self):
         selected_file = self.ui.comboBox.currentText()
@@ -336,13 +401,69 @@ class RedWindow(QMainWindow):
                 file_content = file.read()
             self.ui.lineEdit_2.setText(file_content)
 
+            # Обновляем значение столбца last_opened в базе данных
+            if db.open():
+                query = QSqlQuery()
+                query.prepare("UPDATE files SET last_opened=:last_opened WHERE file_name=:file_name")
+                query.bindValue(":last_opened", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                query.bindValue(":file_name", selected_file)
+
+                if not query.exec():
+                    return
+                db.commit()
+
     def save_file(self):
         text = self.ui.lineEdit_2.text()
         selected_file = self.ui.comboBox.currentText()
         if selected_file:
             with open(selected_file, "w") as file:
                 file.write(text)
-            QMessageBox.about(self, "Успех", "Файл успешно сохранен.")
+
+            # Получаем данные файла
+            file_name = selected_file
+            creation_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            hash_value = self.calculate_md5_hash(text)
+
+            # Сохраняем данные файла в базу данных
+            if db.open():
+                query = QSqlQuery()
+                query.prepare("SELECT * FROM files WHERE file_name=:file_name")
+                query.bindValue(":file_name", file_name)
+
+                if query.exec() and query.next():
+                    # Запись уже существует, выполняем обновление значений
+                    query.prepare("UPDATE files SET hash=:hash, last_saved=:last_saved WHERE file_name=:file_name")
+                    query.bindValue(":hash", hash_value)
+                    query.bindValue(":last_saved", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    query.bindValue(":file_name", file_name)
+
+                    if query.exec():
+                        db.commit()
+                        QMessageBox.about(self, "Успех", "Данные файла успешно обновлены в базе данных.")
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Не удалось обновить данные файла в базе данных.")
+                else:
+                    # Запись не существует, выполняем вставку новой записи
+                    query.prepare(
+                        "INSERT INTO files (file_name, creation_date, last_saved, hash) VALUES (:file_name, :creation_date, :last_saved, :hash)")
+                    query.bindValue(":file_name", file_name)
+                    query.bindValue(":creation_date", creation_date)
+                    query.bindValue(":last_saved", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    query.bindValue(":hash", hash_value)
+
+                    if query.exec():
+                        db.commit()
+                        QMessageBox.about(self, "Успех", "Данные файла успешно сохранены в базе данных.")
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Не удалось сохранить данные файла в базе данных.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+    def calculate_md5_hash(self, text):
+        data = str(text)
+        md5_hash = hashlib.md5()
+        md5_hash.update(data.encode('utf-8'))
+        return md5_hash.hexdigest()
 
     def create_file(self):
         filename = self.ui.lineEdit.text()
@@ -350,8 +471,43 @@ class RedWindow(QMainWindow):
         if filename:
             with open(filename + ".txt", "w") as file:
                 pass
-            self.update_file_list()
-            QMessageBox.about(self, "Успех", "Файл успешно создан.")
+            # self.update_file_list()
+
+            # Получаем данные файла
+            file_name = filename + ".txt"
+            creation_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            # Сохраняем данные файла в базу данных
+            if db.open():
+                query = QSqlQuery()
+                query.prepare(
+                    "INSERT INTO files (file_name, creation_date) VALUES (:file_name, :creation_date)")
+                query.bindValue(":file_name", file_name)
+                query.bindValue(":creation_date", creation_date)
+
+                if query.exec():
+                    file_id = query.lastInsertId()
+                    user_id = self.get_user_id(self.login)
+                    if file_id and user_id:
+                        query.prepare(
+                            "INSERT INTO users_files (file_id, user_id) VALUES (:file_id, :user_id)")
+                        query.bindValue(":file_id", file_id)
+                        query.bindValue(":user_id", user_id)
+
+                        if query.exec():
+                            db.commit()
+                            QMessageBox.about(self, "Успех", "Файл успешно создан и данные сохранены в базе данных.")
+                            index = self.ui.comboBox.findText(filename + ".txt")
+                            if index != -1:
+                                self.ui.comboBox.setCurrentIndex(index)
+                        else:
+                            QMessageBox.about(self, "Ошибка", "Не удалось сохранить данные файла в базе данных.")
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Не удалось получить идентификаторы файла и пользователя.")
+                else:
+                    QMessageBox.about(self, "Ошибка", "Не удалось сохранить данные файла в базе данных.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
         else:
             QMessageBox.about(self, "Ошибка", "Введите название файла.")
 
