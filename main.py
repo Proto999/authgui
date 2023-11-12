@@ -9,7 +9,7 @@ import PySide6
 from PySide6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QDialog, QLineEdit, QComboBox, QFileDialog, \
     QTextEdit, QTableWidgetItem
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, QDateTime
 
 from auth import Ui_AuthWindow
 from reg import Ui_reg
@@ -346,6 +346,7 @@ class AdminPanelWindow(QMainWindow):
 
         return None
 
+
 class RedWindow(QMainWindow):
     def __init__(self, login, password):
         super(RedWindow, self).__init__()
@@ -401,16 +402,43 @@ class RedWindow(QMainWindow):
                 file_content = file.read()
             self.ui.lineEdit_2.setText(file_content)
 
-            # Обновляем значение столбца last_opened в базе данных
+            # Получаем данные файла из базы данных
             if db.open():
                 query = QSqlQuery()
-                query.prepare("UPDATE files SET last_opened=:last_opened WHERE file_name=:file_name")
-                query.bindValue(":last_opened", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                query.prepare("SELECT last_saved, hash FROM files WHERE file_name=:file_name")
                 query.bindValue(":file_name", selected_file)
 
-                if not query.exec():
-                    return
-                db.commit()
+                if query.exec() and query.next():
+                    last_saved = query.value(0)  # Преобразуем в объект datetime.datetime
+                    last_saved_datetime = last_saved.toPython()
+                    print(last_saved_datetime, "query.value0")
+                    hash_value = query.value(1)
+
+                    file_info = os.stat(selected_file)
+                    last_modified = datetime.datetime.fromtimestamp(file_info.st_mtime)
+                    print(last_modified, "last_modified")
+
+                    # Проверяем, изменился ли файл
+                    if last_modified > last_saved_datetime:
+                        QMessageBox.about(self, "Предупреждение", "Файл был изменен после последнего сохранения.")
+
+                    # Проверяем хеш содержимого файла
+                    if hash_value and self.calculate_md5_hash(file_content) != hash_value:
+                        QMessageBox.about(self, "Предупреждение",
+                                          "Хеш содержимого файла не совпадает с сохраненным значением.")
+
+                    # Обновляем значение столбца last_opened в базе данных
+                    query.prepare("UPDATE files SET last_opened=:last_opened WHERE file_name=:file_name")
+                    query.bindValue(":last_opened", last_modified)
+                    query.bindValue(":file_name", selected_file)
+
+                    if not query.exec():
+                        return
+                    db.commit()
+                else:
+                    QMessageBox.about(self, "Ошибка", "Не удалось получить данные файла из базы данных.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
     def save_file(self):
         text = self.ui.lineEdit_2.text()
@@ -458,6 +486,12 @@ class RedWindow(QMainWindow):
                         QMessageBox.about(self, "Ошибка", "Не удалось сохранить данные файла в базе данных.")
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+    def calculate_md5_hash(self, file_content):
+        data = str(file_content)
+        md5_hash = hashlib.md5()
+        md5_hash.update(data.encode('utf-8'))
+        return md5_hash.hexdigest()
 
     def calculate_md5_hash(self, text):
         data = str(text)
@@ -510,6 +544,18 @@ class RedWindow(QMainWindow):
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
         else:
             QMessageBox.about(self, "Ошибка", "Введите название файла.")
+
+    def get_user_id(self, login):
+        if db.open():
+            query = QSqlQuery()
+            query.prepare("SELECT id FROM users1 WHERE login = :login")
+            query.bindValue(":login", login)
+
+            if query.exec() and query.next():
+                user_id = query.value(0)
+                return user_id
+
+        return None
 
     def open_admin_panel(self):
         if self.admin_panel is None:
