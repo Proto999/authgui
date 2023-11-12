@@ -361,8 +361,7 @@ class RedWindow(QMainWindow):
         self.ui.pushButton.clicked.connect(self.update_file_list)
         self.ui.pushButton_3.clicked.connect(self.save_file)
 
-        self.ui.comboBox.currentIndexChanged.connect(self.load_file_content)
-
+        self.ui.pushButton_9.clicked.connect(self.load_file_content)
         self.ui.pushButton_2.clicked.connect(self.create_file)
         self.ui.pushButton_6.clicked.connect(self.open_admin_panel)
         self.ui.pushButton_5.clicked.connect(self.open_moder_panel)
@@ -386,14 +385,14 @@ class RedWindow(QMainWindow):
                 if query.exec():
                     self.ui.comboBox.clear()  # Очищаем combobox
 
-                    self.ui.comboBox.addItem("")
+                    #self.ui.comboBox.addItem("")
                     file_list = []
                     while query.next():
                         file_name = query.value(0)
                         file_list.append(file_name)
 
                     self.ui.comboBox.addItems(file_list)
-                    self.ui.comboBox.setCurrentIndex(-1)
+                    #self.ui.comboBox.setCurrentIndex(-1)
 
                 else:
                     QMessageBox.about(self, "Ошибка", "Не удалось выполнить запрос к базе данных.")
