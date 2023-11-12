@@ -409,16 +409,17 @@ class RedWindow(QMainWindow):
                 query.bindValue(":file_name", selected_file)
 
                 if query.exec() and query.next():
-                    last_saved = query.value(0)  # Преобразуем в объект datetime.datetime
+                    last_saved = query.value(0)
                     last_saved_datetime = last_saved.toPython()
-                    print(last_saved_datetime, "query.value0")
+                    print(type(last_saved_datetime), last_saved_datetime, "last_saved_datetime")
+
                     hash_value = query.value(1)
-
                     file_info = os.stat(selected_file)
-                    last_modified = datetime.datetime.fromtimestamp(file_info.st_mtime)
-                    print(last_modified, "last_modified")
 
-                    # Проверяем, изменился ли файл
+                    last_modified = datetime.datetime.fromtimestamp(file_info.st_mtime)
+                    last_modified = last_modified.replace(microsecond=0)
+                    print(type(last_modified), last_modified, "last_modified")
+
                     if last_modified > last_saved_datetime:
                         QMessageBox.about(self, "Предупреждение", "Файл был изменен после последнего сохранения.")
 
@@ -449,7 +450,7 @@ class RedWindow(QMainWindow):
 
             # Получаем данные файла
             file_name = selected_file
-            creation_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            creation_date = datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S")
             hash_value = self.calculate_md5_hash(text)
 
             # Сохраняем данные файла в базу данных
@@ -462,7 +463,7 @@ class RedWindow(QMainWindow):
                     # Запись уже существует, выполняем обновление значений
                     query.prepare("UPDATE files SET hash=:hash, last_saved=:last_saved WHERE file_name=:file_name")
                     query.bindValue(":hash", hash_value)
-                    query.bindValue(":last_saved", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    query.bindValue(":last_saved", datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S"))
                     query.bindValue(":file_name", file_name)
 
                     if query.exec():
@@ -474,9 +475,10 @@ class RedWindow(QMainWindow):
                     # Запись не существует, выполняем вставку новой записи
                     query.prepare(
                         "INSERT INTO files (file_name, creation_date, last_saved, hash) VALUES (:file_name, :creation_date, :last_saved, :hash)")
+                    last_saved = datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S")
                     query.bindValue(":file_name", file_name)
                     query.bindValue(":creation_date", creation_date)
-                    query.bindValue(":last_saved", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    query.bindValue(":last_saved", last_saved)
                     query.bindValue(":hash", hash_value)
 
                     if query.exec():
