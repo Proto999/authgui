@@ -7,7 +7,7 @@ import datetime
 
 import PySide6
 from PySide6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
-from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QDialog, QLineEdit, QComboBox, QFileDialog, \
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QComboBox, QFileDialog, \
     QTextEdit, QTableWidgetItem
 from PySide6.QtCore import QObject, Signal, QDateTime
 
@@ -360,13 +360,18 @@ class RedWindow(QMainWindow):
 
         self.ui.pushButton.clicked.connect(self.update_file_list)
         self.ui.pushButton_3.clicked.connect(self.save_file)
+
         self.ui.comboBox.currentIndexChanged.connect(self.load_file_content)
+
         self.ui.pushButton_2.clicked.connect(self.create_file)
         self.ui.pushButton_6.clicked.connect(self.open_admin_panel)
         self.ui.pushButton_5.clicked.connect(self.open_moder_panel)
+        self.ui.pushButton_8.clicked.connect(self.save_file_secretextension)
 
         self.admin_panel = None
         self.moder_panel = None
+
+        self.ui.comboBox.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
 
     def update_file_list(self):
         user_id = self.get_user_id(self.login)  # Получаем user_id
@@ -381,12 +386,14 @@ class RedWindow(QMainWindow):
                 if query.exec():
                     self.ui.comboBox.clear()  # Очищаем combobox
 
+                    self.ui.comboBox.addItem("")
                     file_list = []
                     while query.next():
                         file_name = query.value(0)
                         file_list.append(file_name)
 
                     self.ui.comboBox.addItems(file_list)
+                    self.ui.comboBox.setCurrentIndex(-1)
 
                 else:
                     QMessageBox.about(self, "Ошибка", "Не удалось выполнить запрос к базе данных.")
@@ -395,7 +402,7 @@ class RedWindow(QMainWindow):
         else:
             QMessageBox.about(self, "Ошибка", "Не удалось получить идентификатор пользователя.")
 
-    def load_file_content(self):
+    def load_file_content(self, new_file):
         selected_file = self.ui.comboBox.currentText()
         if selected_file:
             with open(selected_file, "r") as file:
@@ -410,10 +417,12 @@ class RedWindow(QMainWindow):
 
                 if query.exec() and query.next():
                     last_saved = query.value(0)
+
                     last_saved_datetime = last_saved.toPython()
                     print(type(last_saved_datetime), last_saved_datetime, "last_saved_datetime")
 
                     hash_value = query.value(1)
+
                     file_info = os.stat(selected_file)
 
                     last_modified = datetime.datetime.fromtimestamp(file_info.st_mtime)
@@ -428,6 +437,12 @@ class RedWindow(QMainWindow):
                         QMessageBox.about(self, "Предупреждение",
                                           "Хеш содержимого файла не совпадает с сохраненным значением.")
 
+                    print(selected_file, "selected_file")
+                    selected_file = self.change_to_secretextension(selected_file)  # Изменяем разрешение файла
+                    new_file = os.path.splitext(selected_file)[0] + ".secretextension"
+                    self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), new_file)
+                    print(selected_file, "selected_file_secretextension")
+
                     # Обновляем значение столбца last_opened в базе данных
                     query.prepare("UPDATE files SET last_opened=:last_opened WHERE file_name=:file_name")
                     query.bindValue(":last_opened", last_modified)
@@ -441,15 +456,78 @@ class RedWindow(QMainWindow):
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
+    def change_to_secretextension(self, selected_file):
+        file_name, file_ext = os.path.splitext(selected_file)
+        new_file = file_name + ".secretextension"
+        os.rename(selected_file, new_file)
+        print(new_file, "new_file")
+        return new_file
+
     def save_file(self):
         text = self.ui.lineEdit_2.text()
         selected_file = self.ui.comboBox.currentText()
         if selected_file:
-            with open(selected_file, "w") as file:
+            new_file = self.change_to_txt(selected_file)  # Изменяем расширение файла на .txt
+            with open(new_file, "w") as file:
                 file.write(text)
 
-            # Получаем данные файла
-            file_name = selected_file
+            # Получаем остальные данные файла
+            file_name = os.path.basename(new_file)
+            creation_date = datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S")
+            hash_value = self.calculate_md5_hash(text)
+
+            # Сохраняем данные файла в базу данных
+            if db.open():
+                query = QSqlQuery()
+                query.prepare("SELECT * FROM files WHERE file_name=:file_name")
+                query.bindValue(":file_name", file_name)
+
+                if query.exec() and query.next():
+                    # Запись уже существует, выполняем обновление значений
+                    query.prepare("UPDATE files SET hash=:hash, last_saved=:last_saved WHERE file_name=:file_name")
+                    query.bindValue(":hash", hash_value)
+                    query.bindValue(":last_saved", datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S"))
+                    query.bindValue(":file_name", file_name)
+
+                    if query.exec():
+                        db.commit()
+                        QMessageBox.about(self, "Успех", "Данные файла успешно обновлены в базе данных.")
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Не удалось обновить данные файла в базе данных.")
+                else:
+                    # Запись не существует, выполняем вставку новой записи
+                    query.prepare(
+                        "INSERT INTO files (file_name, creation_date, last_saved, hash) VALUES (:file_name, :creation_date, :last_saved, :hash)")
+                    last_saved = datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S")
+                    query.bindValue(":file_name", file_name)
+                    query.bindValue(":creation_date", creation_date)
+                    query.bindValue(":last_saved", last_saved)
+                    query.bindValue(":hash", hash_value)
+
+                    if query.exec():
+                        db.commit()
+                        QMessageBox.about(self, "Успех", "Данные файла успешно сохранены в базе данных.")
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Не удалось сохранить данные файла в базе данных.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+    def change_to_txt(self, selected_file):
+        file_name, file_ext = os.path.splitext(selected_file)
+        new_file = file_name + ".txt"
+        os.rename(selected_file, new_file)
+        return new_file
+
+    def save_file_secretextension(self):
+        text = self.ui.lineEdit_2.text()
+        selected_file = self.ui.comboBox.currentText()
+        if selected_file:
+            new_file = self.change_to_secretextension(selected_file)  # Изменяем расширение файла на .secretextension
+            with open(new_file, "w") as file:
+                file.write(text)
+
+            # Получаем остальные данные файла
+            file_name = os.path.basename(new_file)
             creation_date = datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S")
             hash_value = self.calculate_md5_hash(text)
 
@@ -511,7 +589,7 @@ class RedWindow(QMainWindow):
 
             # Получаем данные файла
             file_name = filename + ".txt"
-            creation_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            creation_date = datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S")
 
             # Сохраняем данные файла в базу данных
             if db.open():
