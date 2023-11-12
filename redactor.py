@@ -209,6 +209,10 @@ class Ui_RedWindow(object):
 "border-radius: 20px;")
         self.gridLayout_3 = QGridLayout(self.groupBox_2)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
+        self.horizontalSpacer_6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.gridLayout_3.addItem(self.horizontalSpacer_6, 1, 0, 1, 1)
+
         self.pushButton = QPushButton(self.groupBox_2)
         self.pushButton.setObjectName(u"pushButton")
         self.pushButton.setMinimumSize(QSize(170, 35))
@@ -221,7 +225,39 @@ class Ui_RedWindow(object):
 "color: rgb(38, 38, 38);\n"
 "border-radius: 5px;")
 
-        self.gridLayout_3.addWidget(self.pushButton, 2, 1, 1, 1)
+        self.gridLayout_3.addWidget(self.pushButton, 1, 1, 1, 1)
+
+        self.horizontalSpacer_5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.gridLayout_3.addItem(self.horizontalSpacer_5, 1, 2, 1, 1)
+
+        self.pushButton_10 = QPushButton(self.groupBox_2)
+        self.pushButton_10.setObjectName(u"pushButton_10")
+        self.pushButton_10.setMinimumSize(QSize(170, 35))
+        self.pushButton_10.setFont(font6)
+        self.pushButton_10.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
+"color: rgb(38, 38, 38);\n"
+"border-radius: 5px;")
+
+        self.gridLayout_3.addWidget(self.pushButton_10, 6, 1, 1, 1)
+
+        self.label = QLabel(self.groupBox_2)
+        self.label.setObjectName(u"label")
+        self.label.setMinimumSize(QSize(140, 16))
+        self.label.setFont(font5)
+        self.label.setStyleSheet(u"background-color: rgb(44, 47, 51);\n"
+"color: rgb(135, 135, 135);\n"
+"border-radius: 5px;")
+
+        self.gridLayout_3.addWidget(self.label, 2, 1, 1, 1)
+
+        self.comboBox = QComboBox(self.groupBox_2)
+        self.comboBox.setObjectName(u"comboBox")
+        self.comboBox.setMinimumSize(QSize(170, 30))
+        self.comboBox.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
+"color: rgb(38, 38, 38);")
+
+        self.gridLayout_3.addWidget(self.comboBox, 3, 1, 1, 1)
 
         self.label_3 = QLabel(self.groupBox_2)
         self.label_3.setObjectName(u"label_3")
@@ -233,43 +269,19 @@ class Ui_RedWindow(object):
 
         self.gridLayout_3.addWidget(self.label_3, 0, 1, 1, 1)
 
-        self.verticalSpacer_9 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.pushButton_9 = QPushButton(self.groupBox_2)
+        self.pushButton_9.setObjectName(u"pushButton_9")
+        self.pushButton_9.setMinimumSize(QSize(170, 35))
+        self.pushButton_9.setFont(font6)
+        self.pushButton_9.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
+"color: rgb(38, 38, 38);\n"
+"border-radius: 5px;")
 
-        self.gridLayout_3.addItem(self.verticalSpacer_9, 1, 1, 1, 1)
+        self.gridLayout_3.addWidget(self.pushButton_9, 5, 1, 1, 1)
 
         self.verticalSpacer_7 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        self.gridLayout_3.addItem(self.verticalSpacer_7, 6, 1, 1, 1)
-
-        self.label = QLabel(self.groupBox_2)
-        self.label.setObjectName(u"label")
-        self.label.setMinimumSize(QSize(140, 16))
-        self.label.setFont(font5)
-        self.label.setStyleSheet(u"background-color: rgb(44, 47, 51);\n"
-"color: rgb(135, 135, 135);\n"
-"border-radius: 5px;")
-
-        self.gridLayout_3.addWidget(self.label, 4, 1, 1, 1)
-
-        self.verticalSpacer_10 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        self.gridLayout_3.addItem(self.verticalSpacer_10, 3, 1, 1, 1)
-
-        self.horizontalSpacer_5 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.gridLayout_3.addItem(self.horizontalSpacer_5, 2, 2, 1, 1)
-
-        self.comboBox = QComboBox(self.groupBox_2)
-        self.comboBox.setObjectName(u"comboBox")
-        self.comboBox.setMinimumSize(QSize(170, 30))
-        self.comboBox.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
-"color: rgb(38, 38, 38);")
-
-        self.gridLayout_3.addWidget(self.comboBox, 5, 1, 1, 1)
-
-        self.horizontalSpacer_6 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.gridLayout_3.addItem(self.horizontalSpacer_6, 2, 0, 1, 1)
+        self.gridLayout_3.addItem(self.verticalSpacer_7, 4, 1, 1, 1)
 
 
         self.gridLayout_2.addWidget(self.groupBox_2, 1, 1, 1, 1)
@@ -365,8 +377,10 @@ class Ui_RedWindow(object):
         self.label_2.setText(QCoreApplication.translate("RedWindow", u"\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u0444\u0430\u0439\u043b\u0430:", None))
         self.groupBox_2.setTitle("")
         self.pushButton.setText(QCoreApplication.translate("RedWindow", u"\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0444\u0430\u0439\u043b\u044b", None))
-        self.label_3.setText(QCoreApplication.translate("RedWindow", u"\u0412\u044b\u0431\u043e\u0440 \u0444\u0430\u0439\u043b\u0430 \u0434\u043b\u044f \u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f", None))
+        self.pushButton_10.setText(QCoreApplication.translate("RedWindow", u"\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043f\u0440\u0438 \u043f\u043e\u043c\u043e\u0449\u0438 .rar", None))
         self.label.setText(QCoreApplication.translate("RedWindow", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0444\u0430\u0439\u043b:", None))
+        self.label_3.setText(QCoreApplication.translate("RedWindow", u"\u0412\u044b\u0431\u043e\u0440 \u0444\u0430\u0439\u043b\u0430 \u0434\u043b\u044f \u0440\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f", None))
+        self.pushButton_9.setText(QCoreApplication.translate("RedWindow", u"\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043f\u0440\u0438 \u043f\u043e\u043c\u043e\u0449\u0438 .secretextension", None))
         self.groupBox.setTitle("")
         self.pushButton_8.setText(QCoreApplication.translate("RedWindow", u"\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0444\u0430\u0439\u043b \u0432 \u0437\u0430\u0448\u0438\u0444\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u043c \u0444\u043e\u0440\u043c\u0430\u0442\u0435", None))
         self.pushButton_3.setText(QCoreApplication.translate("RedWindow", u"\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0444\u0430\u0439\u043b", None))
