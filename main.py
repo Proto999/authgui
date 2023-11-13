@@ -1,11 +1,17 @@
 import hashlib
 import re
+import shutil
 import subprocess
 import sys
 import os
 import datetime
+import win32con
+import win32file
+import zipfile
 
 import PySide6
+import win32con
+import win32file
 from PySide6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox, QComboBox, QFileDialog, \
     QTextEdit, QTableWidgetItem
@@ -366,6 +372,7 @@ class RedWindow(QMainWindow):
         self.ui.pushButton_6.clicked.connect(self.open_admin_panel)
         self.ui.pushButton_5.clicked.connect(self.open_moder_panel)
         self.ui.pushButton_8.clicked.connect(self.save_file_secretextension)
+        self.ui.pushButton_10.clicked.connect(self.load_file_content_rar)
 
         self.admin_panel = None
         self.moder_panel = None
@@ -563,6 +570,85 @@ class RedWindow(QMainWindow):
                         QMessageBox.about(self, "Успех", "Данные файла успешно сохранены в базе данных.")
                     else:
                         QMessageBox.about(self, "Ошибка", "Не удалось сохранить данные файла в базе данных.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+    import shutil
+
+    def load_file_content_rar(self, new_file):
+        selected_file = self.ui.comboBox.currentText()
+        if selected_file:
+            if not os.path.exists(selected_file):
+                QMessageBox.about(self, "Ошибка", "Файл не найден.")
+                return
+
+            with open(selected_file, "r") as file:
+                file_content = file.read()
+            self.ui.lineEdit_2.setText(file_content)
+
+            # Перемещение файла в защищенный архив
+            if selected_file.endswith(".txt"):
+                archive_folder = os.path.join(os.getcwd(), "защищенный_архив")
+                if not os.path.exists(archive_folder):
+                    os.makedirs(archive_folder)
+                new_file = self.change_to_txt(selected_file)
+                new_file_path = os.path.join(archive_folder, new_file)
+                try:
+                    # Создание архива и добавление файла в него
+                    with zipfile.ZipFile(new_file_path, "w") as zipf:
+                        zipf.write(selected_file, os.path.basename(selected_file))
+
+                    # Удаление исходного файла
+                    os.remove(selected_file)
+
+                    selected_file = new_file_path
+                except Exception as e:
+                    QMessageBox.about(self, "Ошибка", f"Не удалось переместить и архивировать файл: {str(e)}")
+
+            # Получаем данные файла из базы данных
+            if db.open():
+                query = QSqlQuery()
+                query.prepare("SELECT last_saved, hash FROM files WHERE file_name=:file_name")
+                query.bindValue(":file_name", selected_file)
+
+                if query.exec() and query.next():
+                    last_saved = query.value(0)
+
+                    last_saved_datetime = last_saved.toPython()
+                    print(type(last_saved_datetime), last_saved_datetime, "last_saved_datetime")
+
+                    hash_value = query.value(1)
+
+                    file_info = os.stat(selected_file)
+
+                    last_modified = datetime.datetime.fromtimestamp(file_info.st_mtime)
+                    last_modified = last_modified.replace(microsecond=0)
+                    print(type(last_modified), last_modified, "last_modified")
+
+                    if last_modified > last_saved_datetime:
+                        QMessageBox.about(self, "Предупреждение", "Файл был изменен после последнего сохранения.")
+
+                    # Проверяем хеш содержимого файла
+                    if hash_value and self.calculate_md5_hash(file_content) != hash_value:
+                        QMessageBox.about(self, "Предупреждение",
+                                          "Хеш содержимого файла не совпадает с сохраненным значением.")
+
+                    print(selected_file, "selected_file")
+                    selected_file = self.change_to_secretextension(selected_file)  # Изменяем разрешение файла
+                    new_file = os.path.splitext(selected_file)[0] + ".secretextension"
+                    self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), new_file)
+                    print(selected_file, "selected_file_secretextension")
+
+                    # Обновляем значение столбца last_opened в базе данных
+                    query.prepare("UPDATE files SET last_opened=:last_opened WHERE file_name=:file_name")
+                    query.bindValue(":last_opened", last_modified)
+                    query.bindValue(":file_name", selected_file)
+
+                    if not query.exec():
+                        return
+                    db.commit()
+                else:
+                    QMessageBox.about(self, "Ошибка", "Не удалось получить данные файла из базы данных.")
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
