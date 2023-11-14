@@ -371,6 +371,7 @@ class RedWindow(QMainWindow):
         self.ui.pushButton_2.clicked.connect(self.create_file)
         self.ui.pushButton_6.clicked.connect(self.open_admin_panel)
         self.ui.pushButton_5.clicked.connect(self.open_moder_panel)
+        self.ui.pushButton_7.clicked.connect(self.save_file_rar)
         self.ui.pushButton_8.clicked.connect(self.save_file_secretextension)
         self.ui.pushButton_10.clicked.connect(self.load_file_content_rar)
 
@@ -392,14 +393,14 @@ class RedWindow(QMainWindow):
                 if query.exec():
                     self.ui.comboBox.clear()  # Очищаем combobox
 
-                    #self.ui.comboBox.addItem("")
+                    # self.ui.comboBox.addItem("")
                     file_list = []
                     while query.next():
                         file_name = query.value(0)
                         file_list.append(file_name)
 
                     self.ui.comboBox.addItems(file_list)
-                    #self.ui.comboBox.setCurrentIndex(-1)
+                    # self.ui.comboBox.setCurrentIndex(-1)
 
                 else:
                     QMessageBox.about(self, "Ошибка", "Не удалось выполнить запрос к базе данных.")
@@ -573,7 +574,63 @@ class RedWindow(QMainWindow):
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
-    import shutil
+    def save_file_rar(self, archive_name):
+        try:
+            with zipfile.ZipFile(archive_name, 'r') as zip_ref:
+                file_list = zip_ref.namelist()
+                txt_files = [f for f in file_list if f.endswith(".txt")]
+                if len(txt_files) == 1:
+                    txt_file = txt_files[0]
+                    extracted_content = zip_ref.read(txt_file).decode('utf-8')
+
+                    # Получаем остальные данные файла
+                    file_name = os.path.basename(txt_file)
+                    creation_date = datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S")
+                    hash_value = self.calculate_md5_hash(extracted_content)
+
+                    # Сохраняем данные файла в базу данных
+                    if db.open():
+                        query = QSqlQuery()
+                        query.prepare("SELECT * FROM files WHERE file_name=:file_name")
+                        query.bindValue(":file_name", file_name)
+
+                        if query.exec() and query.next():
+                            # Запись уже существует, выполняем обновление значений
+                            query.prepare(
+                                "UPDATE files SET hash=:hash, last_saved=:last_saved WHERE file_name=:file_name")
+                            query.bindValue(":hash", hash_value)
+                            query.bindValue(":last_saved", datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S"))
+                            query.bindValue(":file_name", file_name)
+
+                            if query.exec():
+                                db.commit()
+                                QMessageBox.about(self, "Успех", "Данные файла успешно обновлены в базе данных.")
+                            else:
+                                QMessageBox.about(self, "Ошибка", "Не удалось обновить данные файла в базе данных.")
+                        else:
+                            # Запись не существует, выполняем вставку новой записи
+                            query.prepare(
+                                "INSERT INTO files (file_name, creation_date, last_saved, hash) VALUES (:file_name, :creation_date, :last_saved, :hash)")
+                            query.bindValue(":file_name", file_name)
+                            query.bindValue(":creation_date", creation_date)
+                            query.bindValue(":last_saved", datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S"))
+                            query.bindValue(":hash", hash_value)
+
+                            if query.exec():
+                                db.commit()
+                                QMessageBox.about(self, "Успех", "Данные файла успешно сохранены в базе данных.")
+                            else:
+                                QMessageBox.about(self, "Ошибка", "Не удалось сохранить данные файла в базе данных.")
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+                else:
+                    QMessageBox.about(self, "Ошибка", "Архив должен содержать ровно один .txt файл.")
+
+        except Exception as e:
+            QMessageBox.about(self, "Ошибка", f"Не удалось разархивировать файл: {str(e)}")
+
+
 
     def load_file_content_rar(self, new_file):
         selected_file = self.ui.comboBox.currentText()
@@ -585,25 +642,6 @@ class RedWindow(QMainWindow):
             with open(selected_file, "r") as file:
                 file_content = file.read()
             self.ui.lineEdit_2.setText(file_content)
-
-            # Перемещение файла в защищенный архив
-            if selected_file.endswith(".txt"):
-                archive_folder = os.path.join(os.getcwd(), "защищенный_архив")
-                if not os.path.exists(archive_folder):
-                    os.makedirs(archive_folder)
-                new_file = self.change_to_txt(selected_file)
-                new_file_path = os.path.join(archive_folder, new_file)
-                try:
-                    # Создание архива и добавление файла в него
-                    with zipfile.ZipFile(new_file_path, "w") as zipf:
-                        zipf.write(selected_file, os.path.basename(selected_file))
-
-                    # Удаление исходного файла
-                    os.remove(selected_file)
-
-                    selected_file = new_file_path
-                except Exception as e:
-                    QMessageBox.about(self, "Ошибка", f"Не удалось переместить и архивировать файл: {str(e)}")
 
             # Получаем данные файла из базы данных
             if db.open():
@@ -634,23 +672,52 @@ class RedWindow(QMainWindow):
                                           "Хеш содержимого файла не совпадает с сохраненным значением.")
 
                     print(selected_file, "selected_file")
-                    selected_file = self.change_to_secretextension(selected_file)  # Изменяем разрешение файла
-                    new_file = os.path.splitext(selected_file)[0] + ".secretextension"
+                    #selected_file = self.change_to_secretextension(selected_file)  # Изменяем разрешение файла
+                    new_file = os.path.splitext(selected_file)[0] + ".zip"
                     self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), new_file)
-                    print(selected_file, "selected_file_secretextension")
+                    print(selected_file, "selected_file_zip")
 
-                    # Обновляем значение столбца last_opened в базе данных
+                    # Перемещение файла в защищенный архив
+                    if selected_file.endswith(".txt"):
+                        try:
+                            # Архивируем .txt файл
+                            if selected_file.endswith(".txt"):
+                                archive_name = self.archive_txt_file(selected_file)
+                                if archive_name:
+                                    # Удаление исходного файла
+                                    os.remove(selected_file)
+                                    selected_file = archive_name
+                                else:
+                                    return
+                            else:
+                                print("Ошибка: Невозможно архивировать файл. Файл не является .txt файлом.")
+                                return
+                        except Exception as e:
+                            QMessageBox.about(self, "Ошибка", f"Не удалось переместить и архивировать файл: {str(e)}")
+
+                            # Обновляем значение столбца last_opened в базе данных
                     query.prepare("UPDATE files SET last_opened=:last_opened WHERE file_name=:file_name")
                     query.bindValue(":last_opened", last_modified)
                     query.bindValue(":file_name", selected_file)
 
                     if not query.exec():
                         return
-                    db.commit()
-                else:
-                    QMessageBox.about(self, "Ошибка", "Не удалось получить данные файла из базы данных.")
+                db.commit()
             else:
-                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+                QMessageBox.about(self, "Ошибка", "Не удалось получить данные файла из базаз данных.")
+        else:
+            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+    def archive_txt_file(self, file_path):
+        if file_path.endswith(".txt"):
+            file_name = os.path.basename(file_path)
+            archive_name = file_name.replace(".txt", ".zip")
+            with zipfile.ZipFile(archive_name, "w") as zipf:
+                zipf.write(file_path, file_name)
+            return archive_name
+        else:
+            print("Ошибка: Невозможно архивировать файл. Файл не является .txt файлом.")
+            return None
 
     def calculate_md5_hash(self, file_content):
         data = str(file_content)
