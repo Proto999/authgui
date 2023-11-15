@@ -8,6 +8,7 @@ import datetime
 import win32con
 import win32file
 import zipfile
+import time
 
 import PySide6
 import win32con
@@ -529,9 +530,21 @@ class RedWindow(QMainWindow):
         text = self.ui.lineEdit_2.text()
         selected_file = self.ui.comboBox.currentText()
         if selected_file:
-            new_file = self.change_to_secretextension(selected_file)  # Изменяем расширение файла на .secretextension
-            with open(new_file, "w") as file:
-                file.write(text)
+            if selected_file.endswith(".zip"):
+                with zipfile.ZipFile(selected_file, 'r') as zip_ref:
+                    file_list = zip_ref.namelist()
+                    if len(file_list) == 1:  # Предполагаем, что в архиве только один файл
+                        extracted_file = file_list[0]
+                        zip_ref.extract(extracted_file)  # Разархивируем файл
+                        new_file = extracted_file.replace(".txt", ".secretextension")
+                        os.rename(extracted_file, new_file)  # Меняем расширение файла на .secretextension
+                        with open(new_file, "w") as file:
+                            file.write(text)
+            else:
+                new_file = self.change_to_secretextension(
+                    selected_file)  # Изменяем расширение файла на .secretextension
+                with open(new_file, "w") as file:
+                    file.write(text)
 
             # Получаем остальные данные файла
             file_name = os.path.basename(new_file)
@@ -573,6 +586,9 @@ class RedWindow(QMainWindow):
                         QMessageBox.about(self, "Ошибка", "Не удалось сохранить данные файла в базе данных.")
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+        time.sleep(1)  # Добавляем задержку в 1 секунду
+        os.remove(selected_file)  # Удаляем архив
 
     def save_file_rar(self, archive_name):
         try:
@@ -630,8 +646,6 @@ class RedWindow(QMainWindow):
         except Exception as e:
             QMessageBox.about(self, "Ошибка", f"Не удалось разархивировать файл: {str(e)}")
 
-
-
     def load_file_content_rar(self, new_file):
         selected_file = self.ui.comboBox.currentText()
         if selected_file:
@@ -643,7 +657,6 @@ class RedWindow(QMainWindow):
                 file_content = file.read()
             self.ui.lineEdit_2.setText(file_content)
 
-            # Получаем данные файла из базы данных
             if db.open():
                 query = QSqlQuery()
                 query.prepare("SELECT last_saved, hash FROM files WHERE file_name=:file_name")
@@ -653,60 +666,51 @@ class RedWindow(QMainWindow):
                     last_saved = query.value(0)
 
                     last_saved_datetime = last_saved.toPython()
-                    print(type(last_saved_datetime), last_saved_datetime, "last_saved_datetime")
-
                     hash_value = query.value(1)
 
                     file_info = os.stat(selected_file)
-
                     last_modified = datetime.datetime.fromtimestamp(file_info.st_mtime)
                     last_modified = last_modified.replace(microsecond=0)
-                    print(type(last_modified), last_modified, "last_modified")
 
                     if last_modified > last_saved_datetime:
                         QMessageBox.about(self, "Предупреждение", "Файл был изменен после последнего сохранения.")
 
-                    # Проверяем хеш содержимого файла
                     if hash_value and self.calculate_md5_hash(file_content) != hash_value:
                         QMessageBox.about(self, "Предупреждение",
                                           "Хеш содержимого файла не совпадает с сохраненным значением.")
 
-                    print(selected_file, "selected_file")
-                    #selected_file = self.change_to_secretextension(selected_file)  # Изменяем разрешение файла
-                    new_file = os.path.splitext(selected_file)[0] + ".zip"
-                    self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), new_file)
-                    print(selected_file, "selected_file_zip")
-
-                    # Перемещение файла в защищенный архив
-                    if selected_file.endswith(".txt"):
+                    if selected_file.endswith(".secretextension"):
+                        txt_file = selected_file.replace(".secretextension", ".txt")
                         try:
-                            # Архивируем .txt файл
-                            if selected_file.endswith(".txt"):
-                                archive_name = self.archive_txt_file(selected_file)
-                                if archive_name:
-                                    # Удаление исходного файла
-                                    os.remove(selected_file)
-                                    selected_file = archive_name
-                                else:
-                                    return
-                            else:
-                                print("Ошибка: Невозможно архивировать файл. Файл не является .txt файлом.")
-                                return
+                            os.rename(selected_file, txt_file)  # Переименование файла
+                            selected_file = txt_file
                         except Exception as e:
-                            QMessageBox.about(self, "Ошибка", f"Не удалось переместить и архивировать файл: {str(e)}")
+                            print(f"Ошибка при переименовании файла: {str(e)}")
+                            return
 
-                            # Обновляем значение столбца last_opened в базе данных
+                    try:
+                        archive_name = self.archive_txt_file(selected_file)
+                        if archive_name:
+                            os.remove(selected_file)  # Удаление исходного файла
+                            selected_file = archive_name
+                            self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), selected_file)
+                    except Exception as e:
+                        print(f"Ошибка при архивировании файла: {str(e)}")
+                        return
+
                     query.prepare("UPDATE files SET last_opened=:last_opened WHERE file_name=:file_name")
                     query.bindValue(":last_opened", last_modified)
                     query.bindValue(":file_name", selected_file)
 
                     if not query.exec():
                         return
-                db.commit()
+                    db.commit()
+                else:
+                    QMessageBox.about(self, "Ошибка", "Не удалось получить данные файла из базаз данных.")
             else:
-                QMessageBox.about(self, "Ошибка", "Не удалось получить данные файла из базаз данных.")
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
         else:
-            QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+            QMessageBox.about(self, "Ошибка", "Не удалось открыть файл.")
 
     def archive_txt_file(self, file_path):
         if file_path.endswith(".txt"):
@@ -717,6 +721,17 @@ class RedWindow(QMainWindow):
             return archive_name
         else:
             print("Ошибка: Невозможно архивировать файл. Файл не является .txt файлом.")
+            return None
+
+    def archive_secretextension_file(self, file_path):
+        if file_path.endswith(".secretextension"):
+            file_name = os.path.basename(file_path)
+            archive_name = file_name.replace(".secretextension", ".zip")
+            with zipfile.ZipFile(archive_name, "w") as zipf:
+                zipf.write(file_path, file_name)
+            return archive_name
+        else:
+            print("Ошибка: Невозможно архивировать файл. Файл не является .secretextension файлом.")
             return None
 
     def calculate_md5_hash(self, file_content):
