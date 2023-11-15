@@ -20,13 +20,13 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QGridLayout, QGroupBox,
     QPushButton, QSizePolicy, QSpacerItem, QStatusBar,
     QTableWidget, QTableWidgetItem, QWidget)
 
-class Ui_ModerPanel(object):
-    def setupUi(self, ModerPanel):
-        if not ModerPanel.objectName():
-            ModerPanel.setObjectName(u"ModerPanel")
-        ModerPanel.resize(1125, 850)
-        ModerPanel.setStyleSheet(u"background-color: rgb(83, 83, 92);")
-        self.centralwidget = QWidget(ModerPanel)
+class Ui_UserPanel(object):
+    def setupUi(self, UserPanel):
+        if not UserPanel.objectName():
+            UserPanel.setObjectName(u"UserPanel")
+        UserPanel.resize(1125, 850)
+        UserPanel.setStyleSheet(u"background-color: rgb(83, 83, 92);")
+        self.centralwidget = QWidget(UserPanel)
         self.centralwidget.setObjectName(u"centralwidget")
         self.gridLayout = QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName(u"gridLayout")
@@ -186,29 +186,29 @@ class Ui_ModerPanel(object):
 
         self.gridLayout.addItem(self.verticalSpacer, 3, 1, 1, 1)
 
-        ModerPanel.setCentralWidget(self.centralwidget)
-        self.statusbar = QStatusBar(ModerPanel)
+        UserPanel.setCentralWidget(self.centralwidget)
+        self.statusbar = QStatusBar(UserPanel)
         self.statusbar.setObjectName(u"statusbar")
-        ModerPanel.setStatusBar(self.statusbar)
+        UserPanel.setStatusBar(self.statusbar)
 
-        self.retranslateUi(ModerPanel)
+        self.retranslateUi(UserPanel)
 
-        QMetaObject.connectSlotsByName(ModerPanel)
+        QMetaObject.connectSlotsByName(UserPanel)
     # setupUi
 
-    def retranslateUi(self, ModerPanel):
-        ModerPanel.setWindowTitle(QCoreApplication.translate("ModerPanel", u"\u041f\u0430\u043d\u0435\u043b\u044c \u043c\u043e\u0434\u0435\u0440\u0430\u0442\u043e\u0440\u0430", None))
+    def retranslateUi(self, UserPanel):
+        UserPanel.setWindowTitle(QCoreApplication.translate("UserPanel", u"\u041f\u0430\u043d\u0435\u043b\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f", None))
         self.groupBox.setTitle("")
         ___qtablewidgetitem = self.tableWidget.horizontalHeaderItem(0)
-        ___qtablewidgetitem.setText(QCoreApplication.translate("ModerPanel", u"\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0438", None));
+        ___qtablewidgetitem.setText(QCoreApplication.translate("UserPanel", u"\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0438", None));
         ___qtablewidgetitem1 = self.tableWidget.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("ModerPanel", u"\u0420\u043e\u043b\u0438", None));
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("UserPanel", u"\u0420\u043e\u043b\u0438", None));
         ___qtablewidgetitem2 = self.tableWidget.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("ModerPanel", u"\u0421\u0442\u0430\u0442\u0443\u0441", None));
+        ___qtablewidgetitem2.setText(QCoreApplication.translate("UserPanel", u"\u0421\u0442\u0430\u0442\u0443\u0441", None));
         self.groupBox_4.setTitle("")
-        self.label_7.setText(QCoreApplication.translate("ModerPanel", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f:", None))
-        self.label_8.setText(QCoreApplication.translate("ModerPanel", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0444\u0430\u0439\u043b:", None))
-        self.pushButton_3.setText(QCoreApplication.translate("ModerPanel", u"\u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f", None))
-        self.label_9.setText(QCoreApplication.translate("ModerPanel", u"\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u043f\u0440\u0430\u0432 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0444\u0430\u0439\u043b\u0430\u043c", None))
+        self.label_7.setText(QCoreApplication.translate("UserPanel", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f:", None))
+        self.label_8.setText(QCoreApplication.translate("UserPanel", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0444\u0430\u0439\u043b:", None))
+        self.pushButton_3.setText(QCoreApplication.translate("UserPanel", u"\u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u044c \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f", None))
+        self.label_9.setText(QCoreApplication.translate("UserPanel", u"\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u043f\u0440\u0430\u0432 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0444\u0430\u0439\u043b\u0430\u043c", None))
     # retranslateUi
 
