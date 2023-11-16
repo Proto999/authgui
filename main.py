@@ -385,6 +385,7 @@ class RedWindow(QMainWindow):
         self.ui.pushButton_7.clicked.connect(self.save_file_rar)
         self.ui.pushButton_8.clicked.connect(self.save_file_secretextension)
         self.ui.pushButton_10.clicked.connect(self.load_file_content_rar)
+        self.ui.pushButton_11.clicked.connect(self.delete_file)
 
         self.admin_panel = None
         self.moder_panel = None
@@ -443,7 +444,9 @@ class RedWindow(QMainWindow):
 
     def load_file_content(self, new_file):
         selected_file = self.ui.comboBox.currentText()
+
         if selected_file:
+            # Чтение содержимого файла
             with open(selected_file, "r") as file:
                 file_content = file.read()
             self.ui.lineEdit_2.setText(file_content)
@@ -456,18 +459,15 @@ class RedWindow(QMainWindow):
 
                 if query.exec() and query.next():
                     last_saved = query.value(0)
-
                     last_saved_datetime = last_saved.toPython()
-                    print(type(last_saved_datetime), last_saved_datetime, "last_saved_datetime")
 
                     hash_value = query.value(1)
 
                     file_info = os.stat(selected_file)
-
                     last_modified = datetime.datetime.fromtimestamp(file_info.st_mtime)
                     last_modified = last_modified.replace(microsecond=0)
-                    print(type(last_modified), last_modified, "last_modified")
 
+                    # Проверяем, был ли файл изменен после последнего сохранения
                     if last_modified > last_saved_datetime:
                         QMessageBox.about(self, "Предупреждение", "Файл был изменен после последнего сохранения.")
 
@@ -476,20 +476,22 @@ class RedWindow(QMainWindow):
                         QMessageBox.about(self, "Предупреждение",
                                           "Хеш содержимого файла не совпадает с сохраненным значением.")
 
-                    print(selected_file, "selected_file")
-                    selected_file = self.change_to_secretextension(selected_file)  # Изменяем разрешение файла
-                    new_file = os.path.splitext(selected_file)[0] + ".secretextension"
-                    self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), new_file)
-                    print(selected_file, "selected_file_secretextension")
+                    # Изменяем разрешение файла на .secretextension
+                    new_file = self.change_to_secretextension(selected_file)
 
-                    # Обновляем значение столбца last_opened в базе данных
-                    query.prepare("UPDATE files SET last_opened=:last_opened WHERE file_name=:file_name")
-                    query.bindValue(":last_opened", last_modified)
-                    query.bindValue(":file_name", selected_file)
+                    # Обновляем значение столбца file_name в базе данных
+                    update_query = QSqlQuery()
+                    update_query.prepare(
+                        "UPDATE files SET file_name=:new_file, last_opened=:last_opened WHERE file_name=:old_file")
+                    update_query.bindValue(":new_file", new_file)
+                    update_query.bindValue(":last_opened", last_modified)
+                    update_query.bindValue(":old_file", selected_file)
 
-                    if not query.exec():
-                        return
-                    db.commit()
+                    if update_query.exec():
+                        db.commit()
+                        self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), new_file)
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Не удалось обновить данные файла в базе данных.")
                 else:
                     QMessageBox.about(self, "Ошибка", "Не удалось получить данные файла из базы данных.")
             else:
@@ -676,6 +678,64 @@ class RedWindow(QMainWindow):
 
         except Exception as e:
             QMessageBox.about(self, "Ошибка", f"Не удалось разархивировать файл: {str(e)}")
+
+    def delete_file(self):
+        selected_file = self.ui.comboBox.currentText()
+
+        if selected_file:
+            user_id = self.get_user_id(self.login)
+
+            # Проверяем подключение к базе данных
+            if not db.isOpen():
+                db.open()
+
+            # Удаляем запись из таблицы users_files
+            if user_id and db.isOpen():
+                delete_users_files_query = QSqlQuery()
+                delete_users_files_query.prepare(
+                    "DELETE FROM users_files WHERE user_id=:user_id AND file_id=(SELECT id FROM files WHERE file_name=:file_name)")
+                delete_users_files_query.bindValue(":user_id", user_id)
+                delete_users_files_query.bindValue(":file_name", selected_file)
+
+                if not delete_users_files_query.exec():
+                    error_message = delete_users_files_query.lastError().text()
+                    QMessageBox.about(self, "Ошибка",
+                                      f"Не удалось удалить запись из таблицы users_files: {error_message}")
+                    return
+            else:
+                QMessageBox.about(self, "Ошибка",
+                                  "Не удалось получить идентификатор пользователя или открыть базу данных.")
+                return
+
+            # Удаляем файл из директории
+            try:
+                os.remove(selected_file)
+            except OSError as e:
+                QMessageBox.about(self, "Ошибка", f"Не удалось удалить файл: {e}")
+                return
+
+            # Удаляем данные файла из базы данных
+            if db.isOpen():
+                delete_query = QSqlQuery()
+                delete_query.prepare("DELETE FROM files WHERE file_name=:file_name")
+                delete_query.bindValue(":file_name", selected_file)
+
+                if delete_query.exec():
+                    db.commit()
+                else:
+                    error_message = delete_query.lastError().text()
+                    QMessageBox.about(self, "Ошибка",
+                                      f"Не удалось удалить данные файла из базы данных: {error_message}")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+            # Удаляем название файла из ComboBox
+            index = self.ui.comboBox.findText(selected_file)
+            if index != -1:
+                self.ui.comboBox.removeItem(index)
+                self.ui.comboBox.setCurrentIndex(-1)
+        else:
+            QMessageBox.about(self, "Предупреждение", "Выберите файл для удаления.")
 
     def load_file_content_rar(self, new_file):
         selected_file = self.ui.comboBox.currentText()
