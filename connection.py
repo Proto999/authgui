@@ -1,27 +1,23 @@
 import sys
 
-
 from PySide6.QtSql import QSqlDatabase
 from PySide6.QtWidgets import QApplication
 
-if __name__ == "__main__":
 
-    app = QApplication(sys.argv)
+def test_db_connection():
+    # Создаем объект базы данных
+    db = QSqlDatabase.addDatabase("QODBC")
 
-    db = QSqlDatabase("QPSQL")
-    db.setHostName("localhost")
-    db.setDatabaseName('UserAuth')
-    db.setUserName('postgres')
-    db.setPassword('1')
+    # Устанавливаем параметры подключения
+    db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=UserAuth;UID=admin;PWD=1234")
 
-    if not db.open():
-        print("\n=> Unable to connect to the database")
-        print('\nConnection   : ', db.isOpen())
-        print('Drivers      : ', db.drivers())
-        print('Last error   : ', db.lastError().text())
-        print('\nIs QPSQL driver available : ', db.isDriverAvailable('QPSQL'))
-        sys.exit(1)
+    # Пытаемся открыть соединение
+    if db.open():
+        print("Подключение к базе данных успешно.")
+        db.close()  # Закрываем соединение после проверки
     else:
-        print("\n=> Connect to the database successful")
+        print("Ошибка подключения к базе данных:", db.lastError().text())
 
-    app.exec()
+
+if __name__ == "__main__":
+    test_db_connection()
