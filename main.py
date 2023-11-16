@@ -396,25 +396,46 @@ class RedWindow(QMainWindow):
 
         if user_id:
             if db.open():
-                query = QSqlQuery()
-                query.prepare(
-                    "SELECT file_name FROM files JOIN users_files ON files.id = users_files.file_id WHERE users_files.user_id = :user_id")
-                query.bindValue(":user_id", user_id)
+                # Получаем роль пользователя
+                role_query = QSqlQuery()
+                role_query.prepare("SELECT role FROM users1 WHERE id = :user_id")
+                role_query.bindValue(":user_id", user_id)
 
-                if query.exec():
-                    self.ui.comboBox.clear()  # Очищаем combobox
+                if role_query.exec():
+                    if role_query.next():
+                        role = role_query.value(0)
 
-                    # self.ui.comboBox.addItem("")
-                    file_list = []
-                    while query.next():
-                        file_name = query.value(0)
-                        file_list.append(file_name)
+                        # Выполняем запрос в зависимости от роли пользователя
+                        query = QSqlQuery()
+                        if role in ["Администратор", "Модератор"]:
+                            query.prepare("SELECT file_name FROM files")
+                        elif role in ["Пользователь", "Гость"]:
+                            query.prepare(
+                                "SELECT file_name FROM files JOIN users_files ON files.id = users_files.file_id WHERE users_files.user_id = :user_id"
+                            )
+                            query.bindValue(":user_id", user_id)
 
-                    self.ui.comboBox.addItems(file_list)
-                    # self.ui.comboBox.setCurrentIndex(-1)
+                        if query.exec():
+                            self.ui.comboBox.clear()  # Очищаем combobox
 
+                            file_list = []
+                            while query.next():
+                                file_name = query.value(0)
+                                file_list.append(file_name)
+
+                            self.ui.comboBox.addItems(file_list)
+                        else:
+                            QMessageBox.about(
+                                self, "Ошибка", "Не удалось выполнить запрос к базе данных."
+                            )
+                    else:
+                        QMessageBox.about(
+                            self, "Ошибка", "Не удалось получить роль пользователя."
+                        )
                 else:
-                    QMessageBox.about(self, "Ошибка", "Не удалось выполнить запрос к базе данных.")
+                    QMessageBox.about(
+                        self, "Ошибка", "Не удалось выполнить запрос к базе данных."
+                    )
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
         else:
