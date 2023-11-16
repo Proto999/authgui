@@ -906,11 +906,11 @@ class RedWindow(QMainWindow):
                     if query.next():
                         role = query.value(0)  # Получаем значение роли пользователя
                         if role == "Администратор":
-                            QMessageBox.about(self, "Успех!", "Доступ разрешен. Открываю панель модератора.")
+                            QMessageBox.about(self, "Успех!", "Доступ разрешен. Открываю панель Администратора.")
                             self.admin_panel = AdminPanelWindow()
                             self.admin_panel.show()
                         else:
-                            QMessageBox.about(self, "Ошибка", "У вас нет прав доступа к панели модератора.")
+                            QMessageBox.about(self, "Ошибка", "У вас нет прав доступа к панели Администратора.")
                     else:
                         QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
                 else:
