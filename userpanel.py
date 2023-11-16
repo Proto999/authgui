@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QGridLayout, QGroupBox,
-    QHBoxLayout, QHeaderView, QLabel, QMainWindow,
-    QPushButton, QSizePolicy, QSpacerItem, QStatusBar,
-    QTableWidget, QTableWidgetItem, QWidget)
+from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QComboBox, QGridLayout,
+    QGroupBox, QHBoxLayout, QHeaderView, QLabel,
+    QMainWindow, QPushButton, QSizePolicy, QSpacerItem,
+    QStatusBar, QTableWidget, QTableWidgetItem, QWidget)
 
 class Ui_UserPanel(object):
     def setupUi(self, UserPanel):
@@ -30,14 +30,6 @@ class Ui_UserPanel(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.gridLayout = QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName(u"gridLayout")
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.gridLayout.addItem(self.horizontalSpacer, 0, 0, 1, 1)
-
-        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.gridLayout.addItem(self.horizontalSpacer_2, 0, 2, 1, 1)
-
         self.groupBox = QGroupBox(self.centralwidget)
         self.groupBox.setObjectName(u"groupBox")
         self.groupBox.setMinimumSize(QSize(317, 300))
@@ -50,26 +42,29 @@ class Ui_UserPanel(object):
 
         self.horizontalLayout.addItem(self.horizontalSpacer_18)
 
-        self.tableWidget = QTableWidget(self.groupBox)
-        if (self.tableWidget.columnCount() < 3):
-            self.tableWidget.setColumnCount(3)
+        self.tableWidget_2 = QTableWidget(self.groupBox)
+        if (self.tableWidget_2.columnCount() < 2):
+            self.tableWidget_2.setColumnCount(2)
         font = QFont()
         font.setFamilies([u"Segoe UI"])
         font.setBold(False)
         __qtablewidgetitem = QTableWidgetItem()
         __qtablewidgetitem.setFont(font);
-        self.tableWidget.setHorizontalHeaderItem(0, __qtablewidgetitem)
+        self.tableWidget_2.setHorizontalHeaderItem(0, __qtablewidgetitem)
         __qtablewidgetitem1 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(1, __qtablewidgetitem1)
-        __qtablewidgetitem2 = QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(2, __qtablewidgetitem2)
-        self.tableWidget.setObjectName(u"tableWidget")
-        self.tableWidget.setMinimumSize(QSize(300, 280))
-        self.tableWidget.setMaximumSize(QSize(200, 16777215))
-        self.tableWidget.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
+        self.tableWidget_2.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        self.tableWidget_2.setObjectName(u"tableWidget_2")
+        self.tableWidget_2.setMinimumSize(QSize(300, 280))
+        self.tableWidget_2.setMaximumSize(QSize(200, 16777215))
+        self.tableWidget_2.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
 "color: rgb(38, 38, 38);")
+        self.tableWidget_2.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
+        self.tableWidget_2.horizontalHeader().setStretchLastSection(True)
+        self.tableWidget_2.verticalHeader().setCascadingSectionResizes(False)
+        self.tableWidget_2.verticalHeader().setProperty("showSortIndicator", False)
+        self.tableWidget_2.verticalHeader().setStretchLastSection(False)
 
-        self.horizontalLayout.addWidget(self.tableWidget)
+        self.horizontalLayout.addWidget(self.tableWidget_2)
 
         self.horizontalSpacer_19 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -78,9 +73,17 @@ class Ui_UserPanel(object):
 
         self.gridLayout.addWidget(self.groupBox, 0, 3, 4, 1)
 
-        self.verticalSpacer_8 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.gridLayout.addItem(self.verticalSpacer_8, 1, 1, 1, 1)
+        self.gridLayout.addItem(self.horizontalSpacer, 0, 0, 1, 1)
+
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.gridLayout.addItem(self.verticalSpacer, 3, 1, 1, 1)
+
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.gridLayout.addItem(self.horizontalSpacer_2, 0, 2, 1, 1)
 
         self.groupBox_4 = QGroupBox(self.centralwidget)
         self.groupBox_4.setObjectName(u"groupBox_4")
@@ -182,9 +185,9 @@ class Ui_UserPanel(object):
 
         self.gridLayout.addWidget(self.groupBox_4, 2, 1, 1, 1)
 
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.verticalSpacer_8 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        self.gridLayout.addItem(self.verticalSpacer, 3, 1, 1, 1)
+        self.gridLayout.addItem(self.verticalSpacer_8, 1, 1, 1, 1)
 
         UserPanel.setCentralWidget(self.centralwidget)
         self.statusbar = QStatusBar(UserPanel)
@@ -199,12 +202,10 @@ class Ui_UserPanel(object):
     def retranslateUi(self, UserPanel):
         UserPanel.setWindowTitle(QCoreApplication.translate("UserPanel", u"\u041f\u0430\u043d\u0435\u043b\u044c \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f", None))
         self.groupBox.setTitle("")
-        ___qtablewidgetitem = self.tableWidget.horizontalHeaderItem(0)
+        ___qtablewidgetitem = self.tableWidget_2.horizontalHeaderItem(0)
         ___qtablewidgetitem.setText(QCoreApplication.translate("UserPanel", u"\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0438", None));
-        ___qtablewidgetitem1 = self.tableWidget.horizontalHeaderItem(1)
-        ___qtablewidgetitem1.setText(QCoreApplication.translate("UserPanel", u"\u0420\u043e\u043b\u0438", None));
-        ___qtablewidgetitem2 = self.tableWidget.horizontalHeaderItem(2)
-        ___qtablewidgetitem2.setText(QCoreApplication.translate("UserPanel", u"\u0421\u0442\u0430\u0442\u0443\u0441", None));
+        ___qtablewidgetitem1 = self.tableWidget_2.horizontalHeaderItem(1)
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("UserPanel", u"\u0414\u043e\u0441\u0442\u0443\u043f\u043d\u044b\u0435 \u0444\u0430\u0439\u043b\u044b", None));
         self.groupBox_4.setTitle("")
         self.label_7.setText(QCoreApplication.translate("UserPanel", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f:", None))
         self.label_8.setText(QCoreApplication.translate("UserPanel", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0444\u0430\u0439\u043b:", None))

@@ -380,6 +380,7 @@ class RedWindow(QMainWindow):
 
         self.ui.pushButton_9.clicked.connect(self.load_file_content)
         self.ui.pushButton_2.clicked.connect(self.create_file)
+        self.ui.pushButton_4.clicked.connect(self.open_user_panel)
         self.ui.pushButton_6.clicked.connect(self.open_admin_panel)
         self.ui.pushButton_5.clicked.connect(self.open_moder_panel)
         self.ui.pushButton_7.clicked.connect(self.save_file_rar)
@@ -389,6 +390,7 @@ class RedWindow(QMainWindow):
 
         self.admin_panel = None
         self.moder_panel = None
+        self.user_panel = None
 
         self.ui.comboBox.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
 
@@ -941,6 +943,28 @@ class RedWindow(QMainWindow):
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
+    def open_user_panel(self):
+        if self.moder_panel is None:
+            if db.open():
+                query = QSqlQuery()
+                query.prepare("SELECT role FROM users1 WHERE login=:login")
+                query.bindValue(":login", self.login)
+
+                if query.exec():
+                    if query.next():
+                        role = query.value(0)  # Получаем значение роли пользователя
+                        if role in ["Администратор", "Модератор", "Пользователь"]:
+                            QMessageBox.about(self, "Успех!", "Доступ разрешен. Открываю панель пользователя.")
+                            self.user_panel = UserPanelWindow()
+                            self.user_panel.show()
+                        else:
+                            QMessageBox.about(self, "Ошибка", "У вас нет прав доступа к панели пользователя.")
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
+                else:
+                    QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
 class RegWindow(QMainWindow):
     def __init__(self):
