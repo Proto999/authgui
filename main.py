@@ -24,6 +24,7 @@ from uuid import Ui_MainWindow
 from redactor import Ui_RedWindow
 from adminpanel2 import Ui_adminpanel1
 from moderpanel import Ui_ModerPanel
+from userpanel import Ui_UserPanel
 
 db = QSqlDatabase.addDatabase("QODBC")
 db.setDatabaseName("DRIVER={SQL Server};SERVER=DESKTOP-A320SRA;DATABASE=UserAuth;UID=admin;PWD=1234")
@@ -146,6 +147,15 @@ class AuthWindow(QMainWindow):
                 QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
         else:
             QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
+
+class UserPanelWindow(QMainWindow):
+    def __init__(self):
+        super(UserPanelWindow, self).__init__()
+        self.ui = Ui_UserPanel()
+        self.ui.setupUi(self)
+
+        # self.load_data_from_database()
 
 
 class ModerPanelWindow(QMainWindow):
