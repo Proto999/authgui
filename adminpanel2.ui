@@ -50,6 +50,11 @@ font: 700 10pt &quot;gg sans&quot;;</string>
          </property>
          <item>
           <property name="text">
+           <string>Администратор</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>Модератор</string>
           </property>
          </item>

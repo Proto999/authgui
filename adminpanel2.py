@@ -42,6 +42,7 @@ class Ui_adminpanel1(object):
         self.comboBox_2.addItem("")
         self.comboBox_2.addItem("")
         self.comboBox_2.addItem("")
+        self.comboBox_2.addItem("")
         self.comboBox_2.setObjectName(u"comboBox_2")
         self.comboBox_2.setMinimumSize(QSize(170, 30))
         self.comboBox_2.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
@@ -378,9 +379,10 @@ class Ui_adminpanel1(object):
     def retranslateUi(self, adminpanel1):
         adminpanel1.setWindowTitle(QCoreApplication.translate("adminpanel1", u"\u041f\u0430\u043d\u0435\u043b\u044c \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430", None))
         self.groupBox_2.setTitle("")
-        self.comboBox_2.setItemText(0, QCoreApplication.translate("adminpanel1", u"\u041c\u043e\u0434\u0435\u0440\u0430\u0442\u043e\u0440", None))
-        self.comboBox_2.setItemText(1, QCoreApplication.translate("adminpanel1", u"\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c", None))
-        self.comboBox_2.setItemText(2, QCoreApplication.translate("adminpanel1", u"\u0413\u043e\u0441\u0442\u044c", None))
+        self.comboBox_2.setItemText(0, QCoreApplication.translate("adminpanel1", u"\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440", None))
+        self.comboBox_2.setItemText(1, QCoreApplication.translate("adminpanel1", u"\u041c\u043e\u0434\u0435\u0440\u0430\u0442\u043e\u0440", None))
+        self.comboBox_2.setItemText(2, QCoreApplication.translate("adminpanel1", u"\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c", None))
+        self.comboBox_2.setItemText(3, QCoreApplication.translate("adminpanel1", u"\u0413\u043e\u0441\u0442\u044c", None))
 
         self.label_3.setText(QCoreApplication.translate("adminpanel1", u"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f:", None))
         self.label.setText(QCoreApplication.translate("adminpanel1", u"\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u0440\u043e\u043b\u0438 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f", None))
