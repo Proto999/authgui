@@ -150,12 +150,48 @@ class AuthWindow(QMainWindow):
 
 
 class UserPanelWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, login):
         super(UserPanelWindow, self).__init__()
         self.ui = Ui_UserPanel()
         self.ui.setupUi(self)
+        self.login = login
+        print(login, "login_user_panel")
+        self.load_data_for_user(self.login)
 
-        # self.load_data_from_database()
+    def load_data_for_user(self, login):
+        # Очищаем таблицу
+        self.ui.tableWidget_2.clearContents()
+        self.ui.tableWidget_2.setRowCount(0)
+
+        # Устанавливаем количество столбцов
+        self.ui.tableWidget_2.setColumnCount(2)
+
+        # Получаем данные из базы данных
+        query = QSqlQuery("SELECT u1.login, u1.role, f.file_name "
+                          "FROM users1 u1 "
+                          "JOIN users_files uf ON u1.id = uf.user_id "
+                          "JOIN files f ON uf.file_id = f.id "
+                          "WHERE uf.user_id = (SELECT id FROM users1 WHERE login = :login) "
+                          "ORDER BY u1.role, f.file_name")
+
+        query.bindValue(":login", login)
+
+        row = 0
+        while query.next():
+            user_login = query.value(0)
+            role = query.value(1)
+            file_name = query.value(2)
+
+            # Добавляем строку в таблицу
+            self.ui.tableWidget_2.insertRow(row)
+
+            # Заполняем столбцы 0 и 1
+            self.ui.tableWidget_2.setItem(row, 0, QTableWidgetItem(f"{user_login} ({role})"))
+            self.ui.tableWidget_2.setItem(row, 1, QTableWidgetItem(file_name))
+
+            row += 1
+
+        self.ui.tableWidget_2.repaint()
 
 
 class ModerPanelWindow(QMainWindow):
@@ -955,7 +991,7 @@ class RedWindow(QMainWindow):
                         role = query.value(0)  # Получаем значение роли пользователя
                         if role in ["Администратор", "Модератор", "Пользователь"]:
                             QMessageBox.about(self, "Успех!", "Доступ разрешен. Открываю панель пользователя.")
-                            self.user_panel = UserPanelWindow()
+                            self.user_panel = UserPanelWindow(self.login)
                             self.user_panel.show()
                         else:
                             QMessageBox.about(self, "Ошибка", "У вас нет прав доступа к панели пользователя.")
