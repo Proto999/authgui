@@ -897,10 +897,26 @@ class RedWindow(QMainWindow):
 
     def open_admin_panel(self):
         if self.admin_panel is None:
-            self.admin_panel = AdminPanelWindow()
-            self.admin_panel.show()
-        else:
-            self.admin_panel.show()
+            if db.open():
+                query = QSqlQuery()
+                query.prepare("SELECT role FROM users1 WHERE login=:login")
+                query.bindValue(":login", self.login)
+
+                if query.exec():
+                    if query.next():
+                        role = query.value(0)  # Получаем значение роли пользователя
+                        if role == "Администратор":
+                            QMessageBox.about(self, "Успех!", "Доступ разрешен. Открываю панель модератора.")
+                            self.admin_panel = AdminPanelWindow()
+                            self.admin_panel.show()
+                        else:
+                            QMessageBox.about(self, "Ошибка", "У вас нет прав доступа к панели модератора.")
+                    else:
+                        QMessageBox.about(self, "Ошибка", "Пользователь не найден.")
+                else:
+                    QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
+            else:
+                QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
     def open_moder_panel(self):
         if self.moder_panel is None:
