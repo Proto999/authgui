@@ -3,12 +3,13 @@ import re
 import shutil
 import subprocess
 import sys
-import os
 import datetime
 import win32con
 import win32file
 import zipfile
 import time
+import os
+import stat
 
 import PySide6
 import win32con
@@ -158,6 +159,7 @@ class UserPanelWindow(QMainWindow):
         print(login, "login_user_panel")
 
         self.load_data_for_user(login)
+        self.ui.pushButton_3.clicked.connect(self.share_file_with_user)
 
     def load_data_for_user(self, login):
         # Очищаем таблицу
@@ -232,6 +234,61 @@ class UserPanelWindow(QMainWindow):
             self.ui.comboBox_6.addItem(owner_file_name)
 
         self.ui.tableWidget_2.repaint()
+
+    def share_file_with_user(self):
+        # Получаем выбранных пользователя и файл
+        selected_user = self.ui.comboBox_5.currentText()
+        selected_file = self.ui.comboBox_6.currentText()
+
+        # Проверяем, что пользователь и файл выбраны
+        if not selected_user or not selected_file:
+            QMessageBox.warning(self, "Предупреждение", "Выберите пользователя и файл для передачи прав доступа.")
+            return
+
+        # Получаем user_id выбранного пользователя
+        query_user_id = QSqlQuery()
+        query_user_id.prepare("SELECT id FROM users1 WHERE login = :login")
+        query_user_id.bindValue(":login", selected_user)
+        if not query_user_id.exec_() or not query_user_id.next():
+            QMessageBox.warning(self, "Ошибка", "Не удалось получить информацию о пользователе.")
+            return
+        user_id = query_user_id.value(0)
+
+        # Получаем file_id выбранного файла
+        query_file_id = QSqlQuery()
+        query_file_id.prepare("SELECT id FROM files WHERE file_name = :file_name")
+        query_file_id.bindValue(":file_name", selected_file)
+        if not query_file_id.exec_() or not query_file_id.next():
+            QMessageBox.warning(self, "Ошибка", "Не удалось получить информацию о файле.")
+            return
+        file_id = query_file_id.value(0)
+
+        # Проверяем, что пользователь еще не имеет доступа к файлу
+        query_check_access = QSqlQuery()
+        query_check_access.prepare("SELECT COUNT(*) FROM users_files WHERE user_id = :user_id AND file_id = :file_id")
+        query_check_access.bindValue(":user_id", user_id)
+        query_check_access.bindValue(":file_id", file_id)
+        if not query_check_access.exec_() or not query_check_access.next():
+            QMessageBox.warning(self, "Ошибка", "Не удалось проверить доступ пользователя к файлу.")
+            return
+        if query_check_access.value(0) > 0:
+            QMessageBox.warning(self, "Предупреждение", "Пользователь уже имеет доступ к выбранному файлу.")
+            return
+
+        # Добавляем запись в таблицу users_files
+        query_insert_access = QSqlQuery()
+        query_insert_access.prepare("INSERT INTO users_files (user_id, file_id) VALUES (:user_id, :file_id)")
+        query_insert_access.bindValue(":user_id", user_id)
+        query_insert_access.bindValue(":file_id", file_id)
+        if not query_insert_access.exec_():
+            QMessageBox.warning(self, "Ошибка", "Не удалось предоставить доступ к файлу.")
+            return
+
+        QMessageBox.information(self, "Успех",
+                                f"Пользователю {selected_user} предоставлен доступ к файлу {selected_file}.")
+
+        # Обновляем данные в таблицах
+        self.load_data_for_user(self.login)
 
 
 class ModerPanelWindow(QMainWindow):
@@ -567,7 +624,12 @@ class RedWindow(QMainWindow):
 
                     if update_query.exec():
                         db.commit()
+
+                        os.chmod(new_file, stat.S_IRUSR)  # Только чтение для владельца
+                        print("Файл защищен от записи")
+
                         self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), new_file)
+
                     else:
                         QMessageBox.about(self, "Ошибка", "Не удалось обновить данные файла в базе данных.")
                 else:
@@ -585,8 +647,16 @@ class RedWindow(QMainWindow):
     def save_file(self):
         text = self.ui.lineEdit_2.text()
         selected_file = self.ui.comboBox.currentText()
+        os.chmod(selected_file, stat.S_IRUSR | stat.S_IWUSR)
+        print("Файл разблокирован")
+
         if selected_file:
-            new_file = self.change_to_txt(selected_file)  # Изменяем расширение файла на .txt
+            # Получаем старое название файла
+            old_file_name = os.path.basename(selected_file)
+
+            # Изменяем расширение файла на .txt
+            new_file = self.change_to_txt(selected_file)
+
             with open(new_file, "w") as file:
                 file.write(text)
 
@@ -599,18 +669,25 @@ class RedWindow(QMainWindow):
             if db.open():
                 query = QSqlQuery()
                 query.prepare("SELECT * FROM files WHERE file_name=:file_name")
-                query.bindValue(":file_name", file_name)
+                query.bindValue(":file_name", old_file_name)
 
                 if query.exec() and query.next():
                     # Запись уже существует, выполняем обновление значений
-                    query.prepare("UPDATE files SET hash=:hash, last_saved=:last_saved WHERE file_name=:file_name")
+                    query.prepare(
+                        "UPDATE files SET file_name=:new_file_name, hash=:hash, last_saved=:last_saved WHERE file_name=:old_file_name")
+                    query.bindValue(":new_file_name", file_name)
                     query.bindValue(":hash", hash_value)
                     query.bindValue(":last_saved", datetime.datetime.now().strftime("%Y-%d-%m %H:%M:%S"))
-                    query.bindValue(":file_name", file_name)
+                    query.bindValue(":old_file_name", old_file_name)
 
                     if query.exec():
                         db.commit()
                         QMessageBox.about(self, "Успех", "Данные файла успешно обновлены в базе данных.")
+
+                        # Обновляем название файла в QComboBox
+                        index = self.ui.comboBox.findText(old_file_name)
+                        if index != -1:
+                            self.ui.comboBox.setItemText(index, file_name)
                     else:
                         QMessageBox.about(self, "Ошибка", "Не удалось обновить данные файла в базе данных.")
                 else:
@@ -862,6 +939,19 @@ class RedWindow(QMainWindow):
                         if archive_name:
                             os.remove(selected_file)  # Удаление исходного файла
                             selected_file = archive_name
+
+                            # Обновление имени файла в базе данных
+                            query.prepare(
+                                "UPDATE files SET file_name=:file_name, last_opened=:last_opened WHERE file_name=:original_file_name")
+                            query.bindValue(":file_name", selected_file)
+                            query.bindValue(":last_opened", last_modified)
+                            query.bindValue(":original_file_name",
+                                            self.ui.comboBox.itemText(self.ui.comboBox.currentIndex()))
+
+                            if not query.exec():
+                                return
+                            db.commit()
+
                             self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), selected_file)
                     except Exception as e:
                         print(f"Ошибка при архивировании файла: {str(e)}")
@@ -875,7 +965,7 @@ class RedWindow(QMainWindow):
                         return
                     db.commit()
                 else:
-                    QMessageBox.about(self, "Ошибка", "Не удалось получить данные файла из базаз данных.")
+                    QMessageBox.about(self, "Ошибка", "Не удалось получить данные файла из базы данных.")
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
         else:
