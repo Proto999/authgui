@@ -156,7 +156,8 @@ class UserPanelWindow(QMainWindow):
         self.ui.setupUi(self)
         self.login = login
         print(login, "login_user_panel")
-        self.load_data_for_user(self.login)
+
+        self.load_data_for_user(login)
 
     def load_data_for_user(self, login):
         # Очищаем таблицу
@@ -166,27 +167,35 @@ class UserPanelWindow(QMainWindow):
         # Устанавливаем количество столбцов
         self.ui.tableWidget_2.setColumnCount(2)
 
-        # Получаем данные из базы данных
-        query = QSqlQuery("SELECT u1.login, u1.role, f.file_name "
-                          "FROM users1 u1 "
-                          "JOIN users_files uf ON u1.id = uf.user_id "
-                          "JOIN files f ON uf.file_id = f.id "
-                          "WHERE uf.user_id = (SELECT id FROM users1 WHERE login = :login) "
-                          "ORDER BY u1.role, f.file_name")
+        # Получаем логины пользователей с ролью "Пользователь" и "Гость"
+        query_users = QSqlQuery()
+        query_users.prepare("SELECT login FROM users1 WHERE role IN ('Пользователь', 'Гость')")
+        query_users.exec_()
 
-        query.bindValue(":login", login)
+        # Заполняем столбец 0
+        row = 0
+        while query_users.next():
+            user_login = query_users.value(0)
+            self.ui.tableWidget_2.insertRow(row)
+            self.ui.tableWidget_2.setItem(row, 0, QTableWidgetItem(user_login))
+            row += 1
+
+        # Получаем файлы, с которыми пользователь поделился
+        query_files = QSqlQuery()
+        query_files.prepare("SELECT f.file_name "
+                            "FROM users1 u1 "
+                            "JOIN users_files uf ON u1.id = uf.user_id "
+                            "JOIN files f ON uf.file_id = f.id "
+                            "WHERE uf.user_id = (SELECT id FROM users1 WHERE login = :login) "
+                            "ORDER BY f.file_name")
+        query_files.bindValue(":login", login)
+        query_files.exec_()
 
         row = 0
-        while query.next():
-            user_login = query.value(0)
-            role = query.value(1)
-            file_name = query.value(2)
+        while query_files.next():
+            file_name = query_files.value(0)
 
-            # Добавляем строку в таблицу
-            self.ui.tableWidget_2.insertRow(row)
-
-            # Заполняем столбцы 0 и 1
-            self.ui.tableWidget_2.setItem(row, 0, QTableWidgetItem(f"{user_login} ({role})"))
+            # Заполняем столбец 1
             self.ui.tableWidget_2.setItem(row, 1, QTableWidgetItem(file_name))
 
             row += 1
