@@ -16,9 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QGridLayout, QGroupBox,
-    QHBoxLayout, QHeaderView, QLabel, QMainWindow,
-    QPushButton, QSizePolicy, QSpacerItem, QStatusBar,
-    QTableWidget, QTableWidgetItem, QWidget)
+    QHeaderView, QLabel, QMainWindow, QPushButton,
+    QSizePolicy, QSpacerItem, QStatusBar, QTableWidget,
+    QTableWidgetItem, QWidget)
 
 class Ui_ModerPanel(object):
     def setupUi(self, ModerPanel):
@@ -232,16 +232,12 @@ class Ui_ModerPanel(object):
 
         self.groupBox = QGroupBox(self.centralwidget)
         self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setMinimumSize(QSize(317, 300))
+        self.groupBox.setMinimumSize(QSize(317, 450))
         self.groupBox.setStyleSheet(u"background-color: rgb(44, 47, 51);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 20px;")
-        self.horizontalLayout = QHBoxLayout(self.groupBox)
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalSpacer_18 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-        self.horizontalLayout.addItem(self.horizontalSpacer_18)
-
+        self.gridLayout = QGridLayout(self.groupBox)
+        self.gridLayout.setObjectName(u"gridLayout")
         self.tableWidget = QTableWidget(self.groupBox)
         if (self.tableWidget.columnCount() < 3):
             self.tableWidget.setColumnCount(3)
@@ -256,16 +252,37 @@ class Ui_ModerPanel(object):
         __qtablewidgetitem2 = QTableWidgetItem()
         self.tableWidget.setHorizontalHeaderItem(2, __qtablewidgetitem2)
         self.tableWidget.setObjectName(u"tableWidget")
-        self.tableWidget.setMinimumSize(QSize(300, 280))
+        self.tableWidget.setMinimumSize(QSize(300, 215))
         self.tableWidget.setMaximumSize(QSize(200, 16777215))
         self.tableWidget.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
 "color: rgb(38, 38, 38);")
 
-        self.horizontalLayout.addWidget(self.tableWidget)
+        self.gridLayout.addWidget(self.tableWidget, 0, 1, 1, 1)
+
+        self.horizontalSpacer_18 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.gridLayout.addItem(self.horizontalSpacer_18, 0, 0, 1, 1)
 
         self.horizontalSpacer_19 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.horizontalLayout.addItem(self.horizontalSpacer_19)
+        self.gridLayout.addItem(self.horizontalSpacer_19, 0, 2, 1, 1)
+
+        self.tableWidget_2 = QTableWidget(self.groupBox)
+        if (self.tableWidget_2.columnCount() < 2):
+            self.tableWidget_2.setColumnCount(2)
+        __qtablewidgetitem3 = QTableWidgetItem()
+        __qtablewidgetitem3.setFont(font3);
+        self.tableWidget_2.setHorizontalHeaderItem(0, __qtablewidgetitem3)
+        __qtablewidgetitem4 = QTableWidgetItem()
+        self.tableWidget_2.setHorizontalHeaderItem(1, __qtablewidgetitem4)
+        self.tableWidget_2.setObjectName(u"tableWidget_2")
+        self.tableWidget_2.setMinimumSize(QSize(300, 215))
+        self.tableWidget_2.setMaximumSize(QSize(200, 16777215))
+        self.tableWidget_2.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
+"color: rgb(38, 38, 38);")
+        self.tableWidget_2.horizontalHeader().setStretchLastSection(True)
+
+        self.gridLayout.addWidget(self.tableWidget_2, 1, 1, 1, 1)
 
 
         self.gridLayout_4.addWidget(self.groupBox, 0, 3, 4, 1)
@@ -302,5 +319,9 @@ class Ui_ModerPanel(object):
         ___qtablewidgetitem1.setText(QCoreApplication.translate("ModerPanel", u"\u0420\u043e\u043b\u0438", None));
         ___qtablewidgetitem2 = self.tableWidget.horizontalHeaderItem(2)
         ___qtablewidgetitem2.setText(QCoreApplication.translate("ModerPanel", u"\u0421\u0442\u0430\u0442\u0443\u0441", None));
+        ___qtablewidgetitem3 = self.tableWidget_2.horizontalHeaderItem(0)
+        ___qtablewidgetitem3.setText(QCoreApplication.translate("ModerPanel", u"\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0438", None));
+        ___qtablewidgetitem4 = self.tableWidget_2.horizontalHeaderItem(1)
+        ___qtablewidgetitem4.setText(QCoreApplication.translate("ModerPanel", u"\u0414\u043e\u0441\u0442\u0443\u043f\u043d\u044b\u0435 \u0444\u0430\u0439\u043b\u044b", None));
     # retranslateUi
 

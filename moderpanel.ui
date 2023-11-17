@@ -480,7 +480,7 @@ border-radius: 5px;</string>
       <property name="minimumSize">
        <size>
         <width>317</width>
-        <height>300</height>
+        <height>450</height>
        </size>
       </property>
       <property name="styleSheet">
@@ -491,26 +491,13 @@ border-radius: 20px;</string>
       <property name="title">
        <string/>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <spacer name="horizontalSpacer_18">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="1">
         <widget class="QTableWidget" name="tableWidget">
          <property name="minimumSize">
           <size>
            <width>300</width>
-           <height>280</height>
+           <height>215</height>
           </size>
          </property>
          <property name="maximumSize">
@@ -546,7 +533,20 @@ color: rgb(38, 38, 38);</string>
          </column>
         </widget>
        </item>
-       <item>
+       <item row="0" column="0">
+        <spacer name="horizontalSpacer_18">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="2">
         <spacer name="horizontalSpacer_19">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -558,6 +558,45 @@ color: rgb(38, 38, 38);</string>
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="1" column="1">
+        <widget class="QTableWidget" name="tableWidget_2">
+         <property name="minimumSize">
+          <size>
+           <width>300</width>
+           <height>215</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>200</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(135, 135, 135);
+color: rgb(38, 38, 38);</string>
+         </property>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>Пользователи</string>
+          </property>
+          <property name="font">
+           <font>
+            <family>Segoe UI</family>
+            <bold>false</bold>
+           </font>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Доступные файлы</string>
+          </property>
+         </column>
+        </widget>
        </item>
       </layout>
      </widget>

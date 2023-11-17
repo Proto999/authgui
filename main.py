@@ -170,7 +170,7 @@ class UserPanelWindow(QMainWindow):
         # Получаем логины пользователей с ролью "Пользователь" и "Гость"
         query_users = QSqlQuery()
         query_users.prepare("SELECT login FROM users1 WHERE role IN ('Пользователь', 'Гость')")
-        query_users.exec_()
+        query_users.exec()
 
         # Заполняем столбец 0
         row = 0
@@ -189,7 +189,7 @@ class UserPanelWindow(QMainWindow):
                             "WHERE uf.user_id = (SELECT id FROM users1 WHERE login = :login) "
                             "ORDER BY f.file_name")
         query_files.bindValue(":login", login)
-        query_files.exec_()
+        query_files.exec()
 
         row = 0
         while query_files.next():
@@ -199,6 +199,37 @@ class UserPanelWindow(QMainWindow):
             self.ui.tableWidget_2.setItem(row, 1, QTableWidgetItem(file_name))
 
             row += 1
+
+        # Получаем логины пользователей с ролью "Пользователь" и "Гость" и заполняем comboBox_5
+        query_users = QSqlQuery()
+        query_users.prepare("SELECT login FROM users1 WHERE role IN ('Пользователь', 'Гость')")
+        query_users.exec()
+
+        # Очищаем и заполняем comboBox_5
+        self.ui.comboBox_5.clear()
+        while query_users.next():
+            user_login = query_users.value(0)
+            self.ui.comboBox_5.addItem(user_login)
+        # Удаляем первый элемент из comboBox_5, если он не пуст
+        if self.ui.comboBox_5.count() > 0:
+            self.ui.comboBox_5.removeItem(0)
+
+        # Получаем файлы, которыми владеет пользователь и заполняем comboBox_6
+        query_owner_files = QSqlQuery()
+        query_owner_files.prepare("SELECT DISTINCT f.file_name "
+                                  "FROM users1 u1 "
+                                  "JOIN users_files uf ON u1.id = uf.user_id "
+                                  "JOIN files f ON uf.file_id = f.id "
+                                  "WHERE uf.user_id = (SELECT id FROM users1 WHERE login = :login) "
+                                  "ORDER BY f.file_name")
+        query_owner_files.bindValue(":login", login)
+        query_owner_files.exec()
+
+        # Очищаем и заполняем comboBox_6
+        self.ui.comboBox_6.clear()
+        while query_owner_files.next():
+            owner_file_name = query_owner_files.value(0)
+            self.ui.comboBox_6.addItem(owner_file_name)
 
         self.ui.tableWidget_2.repaint()
 
@@ -1010,6 +1041,7 @@ class RedWindow(QMainWindow):
                     QMessageBox.about(self, "Ошибка", "Ошибка выполнения запроса.")
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
+
 
 class RegWindow(QMainWindow):
     def __init__(self):
