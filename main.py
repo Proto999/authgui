@@ -10,7 +10,7 @@ import zipfile
 import time
 import os
 import stat
-
+import pyzipper
 import PySide6
 import win32con
 import win32file
@@ -892,7 +892,7 @@ class RedWindow(QMainWindow):
         else:
             QMessageBox.about(self, "Предупреждение", "Выберите файл для удаления.")
 
-    def load_file_content_rar(self, new_file):
+    def load_file_content_rar(self, password):
         selected_file = self.ui.comboBox.currentText()
         if selected_file:
             if not os.path.exists(selected_file):
