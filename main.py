@@ -19,11 +19,10 @@ from PySide6 import QtCore
 from PySide6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PySide6.QtWidgets import *
 
-
 from auth import Ui_AuthWindow
+from redactor2 import Ui_RedWindow2
 from reg import Ui_reg
 from uuid import Ui_MainWindow
-from redactor import Ui_RedWindow
 from adminpanel2 import Ui_adminpanel1
 from moderpanel import Ui_ModerPanel
 from userpanel import Ui_UserPanel
@@ -118,7 +117,7 @@ class AuthWindow(QMainWindow):
 
     def open_red_window(self, login, password):
         self.close()
-        self.red_window = RedWindow(login, password)
+        self.red_window = RedWindow2(login, password)
         self.red_window.show()
 
     def update_failed_attempts(self, login):
@@ -498,19 +497,19 @@ class AdminPanelWindow(QMainWindow):
         return None
 
 
-class RedWindow(QMainWindow):
+class RedWindow2(QMainWindow):
     def __init__(self, login, password):
-        super(RedWindow, self).__init__()
+        super(RedWindow2, self).__init__()
 
+        self.ui = Ui_RedWindow2()
+        self.ui.setupUi(self)
+        self.red_window = None
         self.setWindowFlag(QtCore.Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.moder_panel = None
         self.login = login
         self.password = password
-
-        self.red_window = None
-        self.ui = Ui_RedWindow()
-        self.ui.setupUi(self)
 
         self.ui.pushButton.clicked.connect(self.update_file_list)
         self.ui.pushButton_3.clicked.connect(self.save_file)
@@ -525,25 +524,15 @@ class RedWindow(QMainWindow):
         self.ui.pushButton_10.clicked.connect(self.load_file_content_rar)
         self.ui.pushButton_11.clicked.connect(self.delete_file)
 
-
-
         self.admin_panel = None
         self.moder_panel = None
         self.user_panel = None
 
         self.ui.comboBox.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
 
-    def mousePressEvent(self, event):
-        # Позволяет перемещать окно, удерживая кнопку мыши
-        if event.button() == Qt.LeftButton:
-            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
-            event.accept()
-
-    def mouseMoveEvent(self, event):
-        # Перемещение окна при удерживании левой кнопки мыши
-        if event.buttons() == Qt.LeftButton:
-            self.move(event.globalPos() - self.drag_position)
-            event.accept()
+    def isResizing(self, event):
+        rect = self.rect()
+        return (rect.bottomRight() - event.pos()).manhattanLength() < 10
 
     def update_file_list(self):
         user_id = self.get_user_id(self.login)  # Получаем user_id

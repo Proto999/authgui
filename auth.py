@@ -41,21 +41,6 @@ class Ui_AuthWindow(object):
 
         self.gridLayout.addItem(self.verticalSpacer, 2, 1, 1, 1)
 
-        self.pushButton_3 = QPushButton(self.centralwidget)
-        self.pushButton_3.setObjectName(u"pushButton_3")
-        self.pushButton_3.setMaximumSize(QSize(275, 76))
-        font1 = QFont()
-        font1.setFamilies([u"gg sans"])
-        font1.setPointSize(14)
-        font1.setBold(True)
-        font1.setUnderline(True)
-        self.pushButton_3.setFont(font1)
-        self.pushButton_3.setStyleSheet(u"background-color: rgb(198, 0, 0);\n"
-"color: rgb(255, 255, 255);\n"
-"border-radius: 15px;")
-
-        self.gridLayout.addWidget(self.pushButton_3, 0, 2, 1, 1)
-
         self.lcdNumber = QLCDNumber(self.centralwidget)
         self.lcdNumber.setObjectName(u"lcdNumber")
         self.lcdNumber.setMaximumSize(QSize(276, 76))
@@ -69,11 +54,11 @@ class Ui_AuthWindow(object):
         self.groupBox = QGroupBox(self.centralwidget)
         self.groupBox.setObjectName(u"groupBox")
         self.groupBox.setMinimumSize(QSize(300, 250))
-        font2 = QFont()
-        font2.setFamilies([u"gg sans"])
-        font2.setPointSize(13)
-        font2.setBold(True)
-        self.groupBox.setFont(font2)
+        font1 = QFont()
+        font1.setFamilies([u"gg sans"])
+        font1.setPointSize(13)
+        font1.setBold(True)
+        self.groupBox.setFont(font1)
         self.groupBox.setStyleSheet(u"background-color: rgb(44, 47, 51);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 20px;\n"
@@ -83,7 +68,7 @@ class Ui_AuthWindow(object):
         self.lineEdit_2 = QLineEdit(self.groupBox)
         self.lineEdit_2.setObjectName(u"lineEdit_2")
         self.lineEdit_2.setMinimumSize(QSize(225, 25))
-        self.lineEdit_2.setFont(font2)
+        self.lineEdit_2.setFont(font1)
         self.lineEdit_2.setStyleSheet(u"background-color: rgb(255, 255, 255);\n"
 "border-radius: 5px;\n"
 "color: rgb(0, 0, 0);")
@@ -97,11 +82,11 @@ class Ui_AuthWindow(object):
         self.label = QLabel(self.groupBox)
         self.label.setObjectName(u"label")
         self.label.setMinimumSize(QSize(150, 16))
-        font3 = QFont()
-        font3.setFamilies([u"gg sans"])
-        font3.setPointSize(11)
-        font3.setBold(True)
-        self.label.setFont(font3)
+        font2 = QFont()
+        font2.setFamilies([u"gg sans"])
+        font2.setPointSize(11)
+        font2.setBold(True)
+        self.label.setFont(font2)
         self.label.setStyleSheet(u"")
 
         self.gridLayout_3.addWidget(self.label, 1, 1, 1, 1)
@@ -109,11 +94,11 @@ class Ui_AuthWindow(object):
         self.lineEdit = QLineEdit(self.groupBox)
         self.lineEdit.setObjectName(u"lineEdit")
         self.lineEdit.setMinimumSize(QSize(225, 25))
-        font4 = QFont()
-        font4.setFamilies([u"gg sans"])
-        font4.setPointSize(12)
-        font4.setBold(True)
-        self.lineEdit.setFont(font4)
+        font3 = QFont()
+        font3.setFamilies([u"gg sans"])
+        font3.setPointSize(12)
+        font3.setBold(True)
+        self.lineEdit.setFont(font3)
         self.lineEdit.setStyleSheet(u"background-color: rgb(255, 255, 255);\n"
 "border-radius: 5px;\n"
 "color: rgb(0, 0, 0);")
@@ -135,7 +120,7 @@ class Ui_AuthWindow(object):
         self.label_2 = QLabel(self.groupBox)
         self.label_2.setObjectName(u"label_2")
         self.label_2.setMinimumSize(QSize(150, 16))
-        self.label_2.setFont(font3)
+        self.label_2.setFont(font2)
         self.label_2.setStyleSheet(u"")
 
         self.gridLayout_3.addWidget(self.label_2, 4, 1, 1, 1)
@@ -182,11 +167,11 @@ class Ui_AuthWindow(object):
         self.pushButton.setObjectName(u"pushButton")
         self.pushButton.setMinimumSize(QSize(350, 50))
         self.pushButton.setMaximumSize(QSize(225, 50))
-        font5 = QFont()
-        font5.setFamilies([u"gg sans"])
-        font5.setPointSize(14)
-        font5.setBold(True)
-        self.pushButton.setFont(font5)
+        font4 = QFont()
+        font4.setFamilies([u"gg sans"])
+        font4.setPointSize(14)
+        font4.setBold(True)
+        self.pushButton.setFont(font4)
         self.pushButton.setStyleSheet(u"background-color: rgb(114, 137, 218);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 20px;")
@@ -197,7 +182,7 @@ class Ui_AuthWindow(object):
         self.pushButton_2.setObjectName(u"pushButton_2")
         self.pushButton_2.setMinimumSize(QSize(350, 50))
         self.pushButton_2.setMaximumSize(QSize(351, 51))
-        self.pushButton_2.setFont(font5)
+        self.pushButton_2.setFont(font4)
         self.pushButton_2.setStyleSheet(u"background-color: rgb(114, 137, 218);\n"
 "color: rgb(255, 255, 255);\n"
 "border-radius: 20px;")
@@ -232,7 +217,6 @@ class Ui_AuthWindow(object):
 
     def retranslateUi(self, AuthWindow):
         AuthWindow.setWindowTitle(QCoreApplication.translate("AuthWindow", u"\u0410\u0432\u0442\u043e\u0440\u0438\u0437\u0430\u0446\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f", None))
-        self.pushButton_3.setText(QCoreApplication.translate("AuthWindow", u"\u0417\u0430\u043a\u0440\u044b\u0442\u044c", None))
         self.groupBox.setTitle(QCoreApplication.translate("AuthWindow", u"                     \u0410\u0432\u0442\u043e\u0440\u0438\u0437\u0430\u0446\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f", None))
         self.label.setText(QCoreApplication.translate("AuthWindow", u"\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043b\u043e\u0433\u0438\u043d:", None))
         self.label_2.setText(QCoreApplication.translate("AuthWindow", u"\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043f\u0430\u0440\u043e\u043b\u044c:", None))
