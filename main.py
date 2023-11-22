@@ -16,6 +16,8 @@ import PySide6
 import win32con
 import win32file
 from PySide6 import QtCore
+from PySide6.QtCore import QEvent, QTimer
+from PySide6.QtGui import Qt, QCloseEvent
 from PySide6.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
 from PySide6.QtWidgets import *
 
@@ -501,11 +503,16 @@ class RedWindow2(QMainWindow):
     def __init__(self, login, password):
         super(RedWindow2, self).__init__()
 
+        self.closing = False
         self.ui = Ui_RedWindow2()
         self.ui.setupUi(self)
         self.red_window = None
+
         self.setWindowFlag(QtCore.Qt.WindowType.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        # Устанавливаем обработчик событий мыши для окна
+        self.installEventFilter(self)
+        self.resizing = False
 
         self.moder_panel = None
         self.login = login
@@ -523,6 +530,22 @@ class RedWindow2(QMainWindow):
         self.ui.pushButton_8.clicked.connect(self.save_file_secretextension)
         self.ui.pushButton_10.clicked.connect(self.load_file_content_rar)
         self.ui.pushButton_11.clicked.connect(self.delete_file)
+        self.ui.pushButton_12.clicked.connect(self.on_pushButton_12_clicked)
+        self.ui.pushButton_13.clicked.connect(self.on_pushButton_13_clicked)
+        self.ui.pushButton_14.clicked.connect(self.confirm_exit)
+
+        self.resize_timer = QTimer(self)
+        self.resize_timer.timeout.connect(self.step_resize)
+        self.resize_step = 10  # Шаг изменения размера
+
+        self.fullscreen_timer = QTimer(self)
+        self.fullscreen_timer.timeout.connect(self.step_fullscreen)
+
+        self.previous_size = None
+
+        # Добавим обработчик событий мыши для изменения размера
+        self.setMouseTracking(True)
+        self.installEventFilter(self)  # Добавим обработчик событий мыши для перемещения окна
 
         self.admin_panel = None
         self.moder_panel = None
@@ -530,9 +553,94 @@ class RedWindow2(QMainWindow):
 
         self.ui.comboBox.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
 
-    def isResizing(self, event):
-        rect = self.rect()
-        return (rect.bottomRight() - event.pos()).manhattanLength() < 10
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
+            self.old_pos = event.globalPosition().toPoint()
+        elif event.type() == QEvent.MouseMove and event.buttons() == Qt.LeftButton:
+            self.move(self.pos() + event.globalPosition().toPoint() - self.old_pos)
+            self.old_pos = event.globalPosition().toPoint()
+        elif event.type() == QEvent.MouseButtonPress and event.button() == Qt.RightButton:
+            self.resize_timer.start(20)
+        elif event.type() == QEvent.MouseButtonRelease and event.button() == Qt.RightButton:
+            self.resize_timer.stop()
+        return super().eventFilter(obj, event)
+
+    def step_resize(self):
+        current_width = self.width()
+        current_height = self.height()
+
+        target_width = 1920
+        target_height = 1080
+        min_width = 900
+        min_height = 435
+
+        if not hasattr(self, 'resizing_direction'):
+            self.resizing_direction = 1  # Направление изменения размера: 1 - увеличение, -1 - уменьшение
+
+        new_width = current_width + self.resizing_direction * self.resize_step
+        new_height = current_height + self.resizing_direction * self.resize_step
+
+        # Если достигнут максимальный или минимальный размер, меняем направление
+        if new_width >= target_width or new_width <= min_width or new_height >= target_height or new_height <= min_height:
+            self.resizing_direction *= -1
+
+        # Ограничиваем размеры окна
+        new_width = max(min_width, min(target_width, new_width))
+        new_height = max(min_height, min(target_height, new_height))
+
+        self.resize(new_width, new_height)
+
+        if new_width <= min_width or new_width >= target_width or new_height <= min_height or new_height >= target_height:
+            self.resize_timer.stop()
+
+    def confirm_exit(self):
+        # Проверка, не было ли окно уже закрыто
+        if not self.closing:
+            self.closing = True
+            reply = QMessageBox.question(
+                self, 'Exit Confirmation',
+                'Are you sure you want to exit?',
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+            if reply == QMessageBox.Yes:
+                current_file = self.ui.comboBox.currentText()
+
+                if current_file.endswith(".txt"):
+                    self.save_file()
+                elif current_file.endswith(".secretextension"):
+                    self.save_file_secretextension()
+                elif current_file.endswith(".zip"):
+                    self.save_file_to_archive()
+
+                self.close()
+
+            # Сброс флага после закрытия окна
+            self.closing = False
+
+    def closeEvent(self, event: QCloseEvent):
+        # Переопределение closeEvent для обработки Alt+F4
+        event.ignore()  # Игнорируем стандартное закрытие
+        # Вызываем confirm_exit вместо закрытия окна
+        self.confirm_exit()
+
+    def on_pushButton_13_clicked(self):
+        # Кнопка для постепенного перехода в полноэкранный режим или возврата к предыдущему размеру
+        if self.isFullScreen():
+            self.showNormal()  # Возвращаемся к предыдущему размеру
+            if self.previous_size is not None:
+                self.resize(*self.previous_size)
+        else:
+            self.previous_size = (self.width(), self.height())  # Сохраняем текущий размер
+            self.showFullScreen()
+
+    def step_fullscreen(self):
+        if not self.isFullScreen():
+            self.showFullScreen()
+            self.fullscreen_timer.stop()
+
+    def on_pushButton_12_clicked(self):
+        # Кнопка для сворачивания окна
+        self.showMinimized()
 
     def update_file_list(self):
         user_id = self.get_user_id(self.login)  # Получаем user_id

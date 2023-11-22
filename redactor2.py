@@ -357,6 +357,7 @@ class Ui_RedWindow2(object):
         self.pushButton_12.setObjectName(u"pushButton_12")
         self.pushButton_12.setMinimumSize(QSize(50, 40))
         self.pushButton_12.setMaximumSize(QSize(50, 40))
+        self.pushButton_12.setFont(font3)
         self.pushButton_12.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
 "color: rgb(38, 38, 38);\n"
 "border-radius: 15px;")
@@ -368,7 +369,8 @@ class Ui_RedWindow2(object):
         self.pushButton_13.setMinimumSize(QSize(50, 40))
         self.pushButton_13.setMaximumSize(QSize(50, 40))
         font8 = QFont()
-        font8.setPointSize(20)
+        font8.setPointSize(19)
+        font8.setBold(True)
         self.pushButton_13.setFont(font8)
         self.pushButton_13.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
 "color: rgb(38, 38, 38);\n"
@@ -380,6 +382,10 @@ class Ui_RedWindow2(object):
         self.pushButton_14.setObjectName(u"pushButton_14")
         self.pushButton_14.setMinimumSize(QSize(50, 40))
         self.pushButton_14.setMaximumSize(QSize(50, 40))
+        font9 = QFont()
+        font9.setPointSize(17)
+        font9.setBold(True)
+        self.pushButton_14.setFont(font9)
         self.pushButton_14.setStyleSheet(u"background-color: rgb(135, 135, 135);\n"
 "color: rgb(38, 38, 38);\n"
 "border-radius: 15px;")
@@ -430,8 +436,8 @@ class Ui_RedWindow2(object):
         self.pushButton_8.setText(QCoreApplication.translate("RedWindow2", u"\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0444\u0430\u0439\u043b \u0432 \u0437\u0430\u0448\u0438\u0444\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u043c \u0444\u043e\u0440\u043c\u0430\u0442\u0435", None))
         self.pushButton_3.setText(QCoreApplication.translate("RedWindow2", u"\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0444\u0430\u0439\u043b", None))
         self.groupBox_5.setTitle("")
-        self.pushButton_12.setText("")
-        self.pushButton_13.setText("")
-        self.pushButton_14.setText("")
+        self.pushButton_12.setText(QCoreApplication.translate("RedWindow2", u"_", None))
+        self.pushButton_13.setText(QCoreApplication.translate("RedWindow2", u"\u041f", None))
+        self.pushButton_14.setText(QCoreApplication.translate("RedWindow2", u"X", None))
     # retranslateUi
 

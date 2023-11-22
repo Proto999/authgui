@@ -747,13 +747,20 @@ border-radius: 20px;</string>
               <height>40</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <family>gg sans</family>
+              <pointsize>14</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
             <property name="styleSheet">
              <string notr="true">background-color: rgb(135, 135, 135);
 color: rgb(38, 38, 38);
 border-radius: 15px;</string>
             </property>
             <property name="text">
-             <string/>
+             <string>_</string>
             </property>
            </widget>
           </item>
@@ -773,7 +780,8 @@ border-radius: 15px;</string>
             </property>
             <property name="font">
              <font>
-              <pointsize>20</pointsize>
+              <pointsize>19</pointsize>
+              <bold>true</bold>
              </font>
             </property>
             <property name="styleSheet">
@@ -782,7 +790,7 @@ color: rgb(38, 38, 38);
 border-radius: 15px;</string>
             </property>
             <property name="text">
-             <string/>
+             <string>П</string>
             </property>
            </widget>
           </item>
@@ -800,13 +808,19 @@ border-radius: 15px;</string>
               <height>40</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <pointsize>17</pointsize>
+              <bold>true</bold>
+             </font>
+            </property>
             <property name="styleSheet">
              <string notr="true">background-color: rgb(135, 135, 135);
 color: rgb(38, 38, 38);
 border-radius: 15px;</string>
             </property>
             <property name="text">
-             <string/>
+             <string>X</string>
             </property>
            </widget>
           </item>
