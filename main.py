@@ -1,20 +1,13 @@
 import hashlib
 import re
-import shutil
 import subprocess
 import sys
 import datetime
-import win32con
-import win32file
 import zipfile
 import time
 import os
 import stat
 import pyzipper
-import msvcrt
-import PySide6
-import win32con
-import win32file
 from PySide6 import QtCore
 from PySide6.QtCore import QEvent, QTimer
 from PySide6.QtGui import Qt, QCloseEvent
