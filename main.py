@@ -601,8 +601,6 @@ class RedWindow2(QMainWindow):
                 if current_file.endswith(".txt"):
                     self.save_file()
                 elif current_file.endswith(".secretextension"):
-                    self.save_file_secretextension()
-                elif current_file.endswith(".zip"):
                     self.save_file_to_archive()
 
                 self.close()
