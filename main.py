@@ -157,73 +157,60 @@ class UserPanelWindow(QMainWindow):
         self.ui.pushButton_3.clicked.connect(self.share_file_with_user)
 
     def load_data_for_user(self, login):
-        # Очищаем таблицу
+        # Очистка таблицы и установка количества столбцов
         self.ui.tableWidget_2.clearContents()
         self.ui.tableWidget_2.setRowCount(0)
-
-        # Устанавливаем количество столбцов
         self.ui.tableWidget_2.setColumnCount(2)
 
-        # Получаем логины пользователей с ролью "Пользователь" и "Гость"
+        # Получение логинов пользователей с ролями 'Пользователь' и 'Гость'
         query_users = QSqlQuery()
-        query_users.prepare("SELECT login FROM users1 WHERE role IN ('Пользователь', 'Гость')")
+        query_users.prepare("SELECT id, login FROM users1 WHERE role IN ('Пользователь', 'Гость') AND login != :login")
+        query_users.bindValue(":login", login)
         query_users.exec()
 
-        # Заполняем столбец 0
+        # Заполнение столбцов логинами пользователей и файлами, к которым у них есть доступ
         row = 0
         while query_users.next():
-            user_login = query_users.value(0)
+            user_id = query_users.value(0)
+            user_login = query_users.value(1)
+
+            # Заполнение столбца 0 логинами пользователей
             self.ui.tableWidget_2.insertRow(row)
             self.ui.tableWidget_2.setItem(row, 0, QTableWidgetItem(user_login))
-            row += 1
 
-        # Получаем файлы, с которыми пользователь поделился
-        query_files = QSqlQuery()
-        query_files.prepare("SELECT f.file_name "
-                            "FROM users1 u1 "
-                            "JOIN users_files uf ON u1.id = uf.user_id "
-                            "JOIN files f ON uf.file_id = f.id "
-                            "WHERE uf.user_id = (SELECT id FROM users1 WHERE login = :login) "
-                            "ORDER BY f.file_name")
-        query_files.bindValue(":login", login)
-        query_files.exec()
+            # Получение файлов, к которым у пользователя есть доступ
+            query_files = QSqlQuery()
+            query_files.prepare("SELECT f.file_name "
+                                "FROM files f "
+                                "JOIN users_files uf ON f.id = uf.file_id "
+                                "WHERE uf.user_id = :user_id "
+                                "ORDER BY f.file_name")
+            query_files.bindValue(":user_id", user_id)
+            query_files.exec()
 
-        row = 0
-        while query_files.next():
-            file_name = query_files.value(0)
+            # Заполнение столбца 1 файлами, к которым у пользователя есть доступ
+            while query_files.next():
+                file_name = query_files.value(0)
+                self.ui.tableWidget_2.setItem(row, 1, QTableWidgetItem(file_name))
+                row += 1
 
-            # Заполняем столбец 1
-            self.ui.tableWidget_2.setItem(row, 1, QTableWidgetItem(file_name))
-
-            row += 1
-
-        # Получаем логины пользователей с ролью "Пользователь" и "Гость" и заполняем comboBox_5
-        query_users = QSqlQuery()
-        query_users.prepare("SELECT login FROM users1 WHERE role IN ('Пользователь', 'Гость')")
-        query_users.exec()
-
-        # Очищаем и заполняем comboBox_5
+        # Очистка и заполнение comboBox_5
         self.ui.comboBox_5.clear()
+        query_users.exec()  # Снова выполняем запрос, чтобы сбросить позицию
         while query_users.next():
-            user_login = query_users.value(0)
+            user_login = query_users.value(1)
             self.ui.comboBox_5.addItem(user_login)
-        # Удаляем первый элемент из comboBox_5, если он не пуст
-        if self.ui.comboBox_5.count() > 0:
-            self.ui.comboBox_5.removeItem(0)
 
-        # Получаем файлы, которыми владеет пользователь и заполняем comboBox_6
+        # Очистка и заполнение comboBox_6
+        self.ui.comboBox_6.clear()
         query_owner_files = QSqlQuery()
         query_owner_files.prepare("SELECT DISTINCT f.file_name "
-                                  "FROM users1 u1 "
-                                  "JOIN users_files uf ON u1.id = uf.user_id "
-                                  "JOIN files f ON uf.file_id = f.id "
+                                  "FROM files f "
+                                  "JOIN users_files uf ON f.id = uf.file_id "
                                   "WHERE uf.user_id = (SELECT id FROM users1 WHERE login = :login) "
                                   "ORDER BY f.file_name")
         query_owner_files.bindValue(":login", login)
         query_owner_files.exec()
-
-        # Очищаем и заполняем comboBox_6
-        self.ui.comboBox_6.clear()
         while query_owner_files.next():
             owner_file_name = query_owner_files.value(0)
             self.ui.comboBox_6.addItem(owner_file_name)
@@ -391,6 +378,7 @@ class AdminPanelWindow(QMainWindow):
 
             row += 1
         self.ui.tableWidget.repaint()
+        self.ui.tableWidget_2.repaint()
         self.ui.comboBox.clear()
         self.ui.comboBox_3.clear()
         self.ui.comboBox_5.clear()
@@ -406,6 +394,42 @@ class AdminPanelWindow(QMainWindow):
         while query.next():
             file_name = query.value(0)
             self.ui.comboBox_6.addItem(file_name)
+
+        self.ui.tableWidget_2.clearContents()
+        self.ui.tableWidget_2.setRowCount(0)
+        self.ui.tableWidget_2.setColumnCount(2)
+
+        # Получение логинов пользователей с ролями 'Пользователь' и 'Гость'
+        query_users = QSqlQuery()
+        query_users.prepare("SELECT id, login FROM users1 WHERE role IN ('Пользователь', 'Гость', 'Администратор', 'Модератор') AND login != :login")
+        query_users.bindValue(":login", login)
+        query_users.exec()
+
+        # Заполнение столбцов логинами пользователей и файлами, к которым у них есть доступ
+        row = 0
+        while query_users.next():
+            user_id = query_users.value(0)
+            user_login = query_users.value(1)
+
+            # Заполнение столбца 0 логинами пользователей
+            self.ui.tableWidget_2.insertRow(row)
+            self.ui.tableWidget_2.setItem(row, 0, QTableWidgetItem(user_login))
+
+            # Получение файлов, к которым у пользователя есть доступ
+            query_files = QSqlQuery()
+            query_files.prepare("SELECT f.file_name "
+                                "FROM files f "
+                                "JOIN users_files uf ON f.id = uf.file_id "
+                                "WHERE uf.user_id = :user_id "
+                                "ORDER BY f.file_name")
+            query_files.bindValue(":user_id", user_id)
+            query_files.exec()
+
+            # Заполнение столбца 1 файлами, к которым у пользователя есть доступ
+            while query_files.next():
+                file_name = query_files.value(0)
+                self.ui.tableWidget_2.setItem(row, 1, QTableWidgetItem(file_name))
+                row += 1
 
     def save_user_file(self):
         user_id = self.get_user_id(self.ui.comboBox_5.currentText())  # Получаем user_id выбранного имени пользователя
@@ -435,6 +459,7 @@ class AdminPanelWindow(QMainWindow):
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
         else:
             QMessageBox.about(self, "Ошибка", "Выберите имя пользователя и файл.")
+        self.ui.tableWidget_2.repaint()
 
     def handle_button_click(self):
         # Получаем выбранный пользователь из self.ui.comboBox
@@ -526,6 +551,7 @@ class RedWindow2(QMainWindow):
         self.ui.pushButton_12.clicked.connect(self.on_pushButton_12_clicked)
         self.ui.pushButton_13.clicked.connect(self.on_pushButton_13_clicked)
         self.ui.pushButton_14.clicked.connect(self.confirm_exit)
+        self.ui.pushButton_15.clicked.connect(self.load_file_content)
 
         self.resize_timer = QTimer(self)
         self.resize_timer.timeout.connect(self.step_resize)
@@ -599,9 +625,9 @@ class RedWindow2(QMainWindow):
                 current_file = self.ui.comboBox.currentText()
 
                 if current_file.endswith(".txt"):
-                    self.save_file()
+                    self.close()
                 elif current_file.endswith(".secretextension"):
-                    self.save_file_to_archive()
+                    self.close()
 
                 self.close()
 
@@ -713,10 +739,11 @@ class RedWindow2(QMainWindow):
                         QMessageBox.about(self, "Предупреждение", "Файл был изменен после последнего сохранения.")
 
                     # Проверяем хеш содержимого файла
-                    if hash_value and self.calculate_md5_hash(selected_file) != hash_value:
+                    if hash_value and self.calculate_md5_hash(file_content) != hash_value:
                         QMessageBox.about(self, "Предупреждение",
                                           "Хеш содержимого файла не совпадает с сохраненным значением.")
-
+                    print(hash_value, "hash_value")
+                    print(self.calculate_md5_hash(file_content), "self.calculate_md5_hash(selected_file)")
                     # Изменяем разрешение файла на .secretextension
                     new_file = self.change_to_secretextension(selected_file)
 
@@ -731,7 +758,7 @@ class RedWindow2(QMainWindow):
                     if update_query.exec():
                         db.commit()
 
-                        os.chmod(new_file, stat.S_IRUSR)  # Только чтение для владельца
+                        #os.chmod(new_file, stat.S_IRUSR)  # Только чтение для владельца
                         print("Файл защищен от записи")
 
                         self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), new_file)
@@ -751,6 +778,14 @@ class RedWindow2(QMainWindow):
         return new_file
 
     def save_file(self):
+        # Получаем роль пользователя
+        user_role = self.get_user_role(self.login)
+        print(user_role)
+        # Проверяем, что роль пользователя в списке допустимых ролей
+        valid_roles = ['Администратор', 'Модератор', 'Пользователь']
+        if user_role not in valid_roles:
+            QMessageBox.about(self, "Ошибка", "У вас нет прав для выполнения этой операции.")
+            return
         text = self.ui.lineEdit_2.text()
         selected_file = self.ui.comboBox.currentText()
         os.chmod(selected_file, stat.S_IRUSR | stat.S_IWUSR)
@@ -821,6 +856,14 @@ class RedWindow2(QMainWindow):
         return new_file
 
     def save_file_secretextension(self):
+        # Получаем роль пользователя
+        user_role = self.get_user_role(self.login)
+        print(user_role)
+        # Проверяем, что роль пользователя в списке допустимых ролей
+        valid_roles = ['Администратор', 'Модератор', 'Пользователь']
+        if user_role not in valid_roles:
+            QMessageBox.about(self, "Ошибка", "У вас нет прав для выполнения этой операции.")
+            return
         text = self.ui.lineEdit_2.text()
         selected_file = self.ui.comboBox.currentText()
         os.chmod(selected_file, stat.S_IRUSR | stat.S_IWUSR)
@@ -884,10 +927,18 @@ class RedWindow2(QMainWindow):
             else:
                 QMessageBox.about(self, "Ошибка", "Не удалось открыть базу данных.")
 
-        time.sleep(1)  # Добавляем задержку в 1 секунду
-        os.remove(selected_file)  # Удаляем архив
+        #time.sleep(1)  # Добавляем задержку в 1 секунду
+        #os.remove(selected_file)  # Удаляем архив
 
     def save_file_to_archive(self):
+        # Получаем роль пользователя
+        user_role = self.get_user_role(self.login)
+        print(user_role)
+        # Проверяем, что роль пользователя в списке допустимых ролей
+        valid_roles = ['Администратор', 'Модератор', 'Пользователь']
+        if user_role not in valid_roles:
+            QMessageBox.about(self, "Ошибка", "У вас нет прав для выполнения этой операции.")
+            return
         selected_file = self.ui.comboBox.currentText()
 
         os.chmod(selected_file, stat.S_IRUSR | stat.S_IWUSR)
@@ -905,7 +956,28 @@ class RedWindow2(QMainWindow):
             else:
                 QMessageBox.about(self, "Ошибка", "Неподдерживаемый формат файла для сохранения в защищенный архив.")
 
+    def get_user_role(self, login):
+        if db.isOpen():
+            query = QSqlQuery()
+            query.prepare("SELECT role FROM users1 WHERE login=:login")
+            query.bindValue(":login", self.login)
+
+            if query.exec():
+                if query.next():
+                    role = query.value(0)
+                    return role
+        return None
+
     def delete_file(self):
+        # Получаем роль пользователя
+        user_role = self.get_user_role(self.login)
+        print(user_role)
+        # Проверяем, что роль пользователя в списке допустимых ролей
+        valid_roles = ['Администратор', 'Модератор', 'Пользователь']
+        if user_role not in valid_roles:
+            QMessageBox.about(self, "Ошибка", "У вас нет прав для выполнения этой операции.")
+            return
+
         selected_file = self.ui.comboBox.currentText()
 
         if selected_file:
@@ -1002,7 +1074,7 @@ class RedWindow2(QMainWindow):
             txt_file_path = os.path.join(os.path.dirname(archive_path), f"{base_name}.secretextension")
 
             # Блокировать файл после извлечения
-            os.chmod(txt_file_path, stat.S_IRUSR)  # Только чтение для владельца
+            #os.chmod(txt_file_path, stat.S_IRUSR)  # Только чтение для владельца
             print("Файл защищен от записи после извлечения")
 
             # Сверяем хеш содержимого из бд
