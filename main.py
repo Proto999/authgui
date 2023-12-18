@@ -8,6 +8,7 @@ import time
 import os
 import stat
 import pyzipper
+import ctypes
 from PySide6 import QtCore
 from PySide6.QtCore import QEvent, QTimer
 from PySide6.QtGui import Qt, QCloseEvent
@@ -1074,7 +1075,7 @@ class RedWindow2(QMainWindow):
             txt_file_path = os.path.join(os.path.dirname(archive_path), f"{base_name}.secretextension")
 
             # Блокировать файл после извлечения
-            #os.chmod(txt_file_path, stat.S_IRUSR)  # Только чтение для владельца
+            os.chmod(txt_file_path, stat.S_IRUSR)  # Только чтение для владельца
             print("Файл защищен от записи после извлечения")
 
             # Сверяем хеш содержимого из бд
@@ -1087,11 +1088,22 @@ class RedWindow2(QMainWindow):
                 # Меняем имя файла в comboBox
                 self.ui.comboBox.setItemText(self.ui.comboBox.currentIndex(), txt_file_path)
 
+                # Вызов функции hide_file для вашего файла .secretextension
+                self.hide_file(txt_file_path)
+                print("Файл скрыт")
             else:
                 QMessageBox.about(self, "Ошибка", "Хеш содержимого файла не совпадает с сохраненным значением.")
         except Exception as e:
             print(f"Ошибка при разархивации файла: {str(e)}")
             QMessageBox.about(self, "Ошибка", "Невозможно открыть архив. Неверный пароль.")
+
+    def hide_file(self, file_path):
+        try:
+            # Сделать файл скрытым
+            ctypes.windll.kernel32.SetFileAttributesW(file_path, 2)  # 2 значит скрытый атрибут
+            print(f"Файл {file_path} скрыт")
+        except Exception as e:
+            print(f"Ошибка при скрытии файла: {str(e)}")
 
     def check_file_hash(self, file_path, user_id):
         if db.open():
@@ -1113,6 +1125,9 @@ class RedWindow2(QMainWindow):
     def archive_txt_file(self, selected_file, user_id):
         os.chmod(selected_file, stat.S_IRUSR | stat.S_IWUSR)
         print("Файл разблокирован")
+        # Вызов функции unhide_file для вашего файла .secretextension
+        self.unhide_file(selected_file)
+        print("Файл открыт")
 
         file_name, file_ext = os.path.splitext(selected_file)
         archive_name = file_name + f".zip"
@@ -1147,6 +1162,16 @@ class RedWindow2(QMainWindow):
         # Обновляем информацию в базе данных
         self.update_database_after_archiving(selected_file, archive_name, content_hash)
         self.update_file_list()
+
+
+    def unhide_file(self, selected_file):
+        try:
+            # Снять атрибут "скрытый" с файла
+            ctypes.windll.kernel32.SetFileAttributesW(selected_file,
+                                                      ctypes.windll.kernel32.GetFileAttributesW(selected_file) & ~2)
+            print(f"Атрибут 'скрытый' снят с файла {selected_file}")
+        except Exception as e:
+            print(f"Ошибка при снятии атрибута 'скрытый': {str(e)}")
 
     def update_database_after_archiving(self, original_file_path, archive_name, content_hash):
         if db.open():
