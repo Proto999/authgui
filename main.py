@@ -1050,16 +1050,78 @@ class RedWindow2(QMainWindow):
 
         # Проверяем расширение файла
         if selected_file.endswith(f".zip"):
-            self.extract_and_check_archive(selected_file, user_id)
+            # Получаем last_opened из базы данных
+            last_opened_user_id = self.get_last_opened_user_id(selected_file)
+
+            # Проверяем совпадение user_id с last_opened_user_id
+            if user_id == last_opened_user_id or self.is_admin_or_moderator(user_id):
+                self.extract_and_check_archive(selected_file, user_id)
+            else:
+                QMessageBox.about(self, "Ошибка", "У вас нет доступа к данному файлу.")
         elif selected_file.endswith(".txt") or selected_file.endswith(".secretextension"):
             QMessageBox.about(self, "Ошибка", "Выбранный вами файл не является защищенным архивом. "
                                               "Используйте другой способ открытия файла.")
         else:
             QMessageBox.about(self, "Ошибка", "Неподдерживаемый формат файла.")
 
+    def is_admin_or_moderator(self, user_id):
+        # Получаем роль пользователя
+        role_query = QSqlQuery()
+        role_query.prepare("SELECT role FROM users1 WHERE id = :user_id")
+        role_query.bindValue(":user_id", user_id)
+
+        if role_query.exec():
+            if role_query.next():
+                role = role_query.value(0)
+                return role in ["Администратор", "Модератор"]
+        return False
+
+    def get_last_opened_user_id(self, selected_file):
+        last_opened_login = self.get_last_opened_user_login(selected_file)
+        return self.get_user_id_from_login(last_opened_login)
+
+    def get_user_id_from_login(self, login):
+        if db.open():
+            query = QSqlQuery()
+            query.prepare("SELECT id FROM users1 WHERE login = :login")
+            query.bindValue(":login", login)
+
+            if query.exec() and query.next():
+                return query.value(0)
+                print(query.value(0))
+        return None
+
+    def get_last_opened_user_login(self, selected_file):
+        if db.open():
+            query = QSqlQuery()
+            query.prepare("SELECT last_opened FROM files WHERE file_name=:file_name")
+            query.bindValue(":file_name", selected_file)
+
+            if query.exec() and query.next():
+                return query.value(0)
+
+        return None
+
     def extract_and_check_archive(self, archive_path, user_id):
         try:
-            password = str(user_id).encode('utf-8')
+            # Получаем last_opened из базы данных
+            last_opened_login = self.get_last_opened_user_login(archive_path)
+
+            # Проверяем совпадение user_id с last_opened_user_id
+            if user_id != self.get_last_opened_user_id(archive_path) and self.is_admin_or_moderator(user_id):
+                # Если user_id не совпадает и роль пользователя "Администратор" или "Модератор",
+                # используем user_id из логина в last_opened
+                password = str(self.get_user_id_from_login(last_opened_login)).encode('utf-8')
+            else:
+                # Получаем user_id из логина указанного в last_opened
+                user_id_from_last_opened = self.get_user_id_from_login(last_opened_user_id)
+
+                if user_id_from_last_opened is None:
+                    print("Ошибка: Не удалось получить ID пользователя из last_opened.")
+                    return
+
+                password = str(user_id_from_last_opened).encode('utf-8')
+                print(password, "password")
             with pyzipper.AESZipFile(archive_path, "r") as zipf:
                 # Вводим в качестве пароля хешированный id пользователя
                 zipf.setpassword(password)
@@ -1147,6 +1209,17 @@ class RedWindow2(QMainWindow):
                                      encryption=pyzipper.WZ_AES) as zipf:
                 zipf.setpassword(password)
                 zipf.write(os.path.basename(selected_file), os.path.basename(selected_file))
+
+            if db.open():
+                query = QSqlQuery()
+                login= self.login
+                query.prepare("UPDATE files SET last_opened = :login WHERE file_name = :selected_file")
+                query.bindValue(":login", login)
+                query.bindValue(":selected_file", selected_file)
+                if not query.exec():
+                    print("Ошибка при обновлении базы данных:", query.lastError().text())
+            else:
+                print("Ошибка при открытии базы данных:", db.lastError().text())
 
         except Exception as e:
             print(f"Ошибка при создании архива: {str(e)}")
